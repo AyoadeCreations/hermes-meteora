@@ -1,0 +1,198 @@
+/* ─── Wallet adapter modal styles (inlined — avoids import resolution issues) ─── */
+.wallet-adapter-button { background-color: transparent; border: none; color: #fff; cursor: pointer; display: flex; align-items: center; font-family: inherit; font-size: 16px; font-weight: 600; height: 48px; line-height: 48px; padding: 0 24px; border-radius: 8px; }
+.wallet-adapter-button-trigger { background-color: #5E6AD2; }
+.wallet-adapter-button:not([disabled]):focus-visible { outline-color: #5E6AD2; }
+.wallet-adapter-button:not([disabled]):hover { background-color: rgba(94,106,210,0.15); }
+.wallet-adapter-button[disabled] { background: rgba(255,255,255,0.06); color: #5C5D6E; cursor: not-allowed; }
+.wallet-adapter-button-end-icon,.wallet-adapter-button-start-icon,.wallet-adapter-button-end-icon img,.wallet-adapter-button-start-icon img { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
+.wallet-adapter-button-end-icon { margin-left: 12px; }
+.wallet-adapter-button-start-icon { margin-right: 12px; }
+.wallet-adapter-collapse { width: 100%; }
+.wallet-adapter-dropdown { position: relative; display: inline-block; }
+.wallet-adapter-dropdown-list { position: absolute; z-index: 99; display: grid; grid-template-rows: 1fr; grid-row-gap: 8px; padding: 8px; top: 100%; right: 0; margin: 0; list-style: none; background: #111116; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); opacity: 0; visibility: hidden; transition: opacity 200ms ease, transform 200ms ease, visibility 200ms; }
+.wallet-adapter-dropdown-list-active { opacity: 1; visibility: visible; transform: translateY(8px); }
+.wallet-adapter-dropdown-list-item { display: flex; flex-direction: row; justify-content: center; align-items: center; border: none; outline: none; cursor: pointer; white-space: nowrap; box-sizing: border-box; padding: 0 16px; width: 100%; border-radius: 8px; font-size: 14px; font-weight: 500; height: 40px; color: #EDEDEF; }
+.wallet-adapter-dropdown-list-item:not([disabled]):hover { background-color: rgba(255,255,255,0.06); }
+.wallet-adapter-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0; transition: opacity linear 150ms; background: rgba(0,0,0,0.6); z-index: 1040; overflow-y: auto; }
+.wallet-adapter-modal.wallet-adapter-modal-fade-in { opacity: 1; }
+.wallet-adapter-modal-button-close { display: flex; align-items: center; justify-content: center; position: absolute; top: 16px; right: 16px; padding: 8px; cursor: pointer; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; }
+.wallet-adapter-modal-button-close:focus-visible { outline-color: #5E6AD2; }
+.wallet-adapter-modal-button-close svg { fill: #9899A6; transition: fill 200ms; }
+.wallet-adapter-modal-button-close:hover svg { fill: #EDEDEF; }
+.wallet-adapter-modal-overlay { background: rgba(0,0,0,0.6); position: fixed; top: 0; left: 0; bottom: 0; right: 0; }
+.wallet-adapter-modal-container { display: flex; margin: 3rem; min-height: calc(100vh - 6rem); align-items: center; justify-content: center; }
+@media (max-width: 480px) { .wallet-adapter-modal-container { margin: 1rem; min-height: calc(100vh - 2rem); } }
+.wallet-adapter-modal-wrapper { box-sizing: border-box; position: relative; display: flex; align-items: center; flex-direction: column; z-index: 1050; max-width: 400px; border-radius: 16px; background: #111116; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 24px 64px rgba(0,0,0,0.7); font-family: inherit; flex: 1; }
+.wallet-adapter-modal-wrapper .wallet-adapter-button { width: 100%; }
+.wallet-adapter-modal-title { font-weight: 600; font-size: 18px; line-height: 28px; margin: 0; padding: 48px 32px 32px; text-align: center; color: #EDEDEF; }
+.wallet-adapter-modal-list { margin: 0 0 12px; padding: 0; width: 100%; list-style: none; }
+.wallet-adapter-modal-list .wallet-adapter-button { font-weight: 500; border-radius: 0; font-size: 15px; }
+.wallet-adapter-modal-list .wallet-adapter-button-end-icon,.wallet-adapter-modal-list .wallet-adapter-button-start-icon,.wallet-adapter-modal-list .wallet-adapter-button-end-icon img,.wallet-adapter-modal-list .wallet-adapter-button-start-icon img { width: 28px; height: 28px; }
+.wallet-adapter-modal-list .wallet-adapter-button span { margin-left: auto; font-size: 12px; opacity: .5; }
+.wallet-adapter-modal-list-more { cursor: pointer; border: none; padding: 12px 24px 24px 12px; align-self: flex-end; display: flex; align-items: center; background-color: transparent; color: #9899A6; }
+.wallet-adapter-modal-list-more svg { fill: #9899A6; margin-left: 0.5rem; }
+.wallet-adapter-modal-middle { width: 100%; display: flex; flex-direction: column; align-items: center; padding: 0 24px 24px; box-sizing: border-box; }
+.wallet-adapter-modal-middle-button { display: block; cursor: pointer; margin-top: 32px; width: 100%; background: #5E6AD2; padding: 12px; font-size: 15px; border: none; border-radius: 8px; color: #fff; font-weight: 600; }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base resets ─────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    -webkit-font-smoothing:  antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering:          optimizeLegibility;
+    color-scheme:            dark;
+  }
+
+  body {
+    @apply bg-bg-base text-text-primary font-sans text-base;
+    background: theme('backgroundImage.page-gradient');
+    min-height: 100dvh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar       { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+  /* ── Selection ── */
+  ::selection { @apply bg-accent-muted text-text-primary; }
+
+  /* ── Focus ring ── */
+  :focus-visible {
+    @apply outline-none ring-1 ring-accent ring-offset-1;
+    ring-offset-color: theme('colors.bg.base');
+  }
+}
+
+/* ─── Component utilities ─────────────────────────────────────────────────── */
+@layer components {
+
+  /* Card variants */
+  .card {
+    @apply bg-bg-surface border border-border rounded-xl p-4 shadow-card;
+    background-image: theme('backgroundImage.card-shine');
+  }
+  .card-elevated {
+    @apply bg-bg-elevated border border-border-strong rounded-xl p-4 shadow-elevated;
+    background-image: theme('backgroundImage.card-shine');
+  }
+
+  /* Data label */
+  .data-label { @apply text-2xs text-text-tertiary uppercase tracking-widest font-medium; }
+  .data-value { @apply text-xl font-semibold text-text-primary tabular-nums; }
+
+  /* Pill badges */
+  .pill         { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-2xs font-medium uppercase tracking-wide; }
+  .pill-success { @apply pill bg-success-muted text-success; }
+  .pill-warning { @apply pill bg-warning-muted text-warning; }
+  .pill-danger  { @apply pill bg-danger-muted text-danger; }
+  .pill-accent  { @apply pill bg-accent-muted text-accent; }
+  .pill-muted   { @apply pill bg-bg-muted text-text-secondary; }
+
+  /* Mono value */
+  .mono { @apply font-mono tabular-nums; }
+
+  /* Divider */
+  .divider { @apply border-t border-border; }
+
+  /* Data table */
+  .data-table   { @apply w-full text-sm; }
+  .data-table th {
+    @apply text-2xs text-text-tertiary uppercase tracking-widest font-medium
+           py-2.5 px-4 text-right border-b border-border;
+  }
+  .data-table th:first-child { @apply text-left; }
+  .data-table td {
+    @apply py-2.5 px-4 text-right border-b border-border-subtle tabular-nums text-text-primary;
+  }
+  .data-table td:first-child { @apply text-left text-text-secondary; }
+  .data-table tr:last-child td { @apply border-b-0; }
+  .data-table tr:hover td { background: rgba(255,255,255,0.025); }
+
+  /* Field inputs */
+  .field-input {
+    @apply w-full bg-bg-muted border border-border rounded-lg px-3 py-2 text-sm text-text-primary
+           placeholder:text-text-tertiary
+           focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
+           transition-all duration-150;
+  }
+  .field-label { @apply block text-xs text-text-secondary mb-1.5; }
+  .field-hint  { @apply text-2xs text-text-tertiary mt-1; }
+  .field-error { @apply text-2xs text-danger mt-1; }
+
+  /* Section header */
+  .section-header { @apply flex items-center justify-between mb-4; }
+  .section-title  { @apply text-2xs text-text-tertiary uppercase tracking-widest font-medium; }
+}
+
+/* ─── Utilities ───────────────────────────────────────────────────────────── */
+@layer utilities {
+  .text-gradient-accent {
+    background: linear-gradient(135deg, #7b86db, #5E6AD2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Ambient blob — decorative background glow */
+  .ambient-blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(64px);
+    pointer-events: none;
+    opacity: 0.07;
+    animation: blobDrift 10s ease-in-out infinite alternate;
+  }
+
+  .tabular { font-variant-numeric: tabular-nums; }
+}
+
+/* ─── Keyframes (referenced by Tailwind arbitrary animation classes) ──────── */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ─── Chart overrides ─────────────────────────────────────────────────────── */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background:    #111116 !important;
+  border:        1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 10px !important;
+  padding:       10px 14px !important;
+  box-shadow:    0 8px 24px rgba(0,0,0,0.5) !important;
+}
+.recharts-tooltip-label {
+  color:         #9899A6 !important;
+  font-size:     11px !important;
+  margin-bottom: 4px !important;
+  font-family:   var(--font-inter) !important;
+}
+.recharts-tooltip-item {
+  color:       #EDEDEF !important;
+  font-size:   12px !important;
+  font-family: var(--font-jetbrains), monospace !important;
+}
+.recharts-cartesian-axis-tick-value {
+  fill:        #5C5D6E !important;
+  font-size:   10px !important;
+  font-family: var(--font-jetbrains), monospace !important;
+}
+.recharts-legend-item-text {
+  color:     #9899A6 !important;
+  font-size: 11px !important;
+}
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(255,255,255,0.05) !important;
+}
