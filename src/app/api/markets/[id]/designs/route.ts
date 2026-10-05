@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMarket, saveDesigns, getDesigns } from '@/lib/db/markets';
+import { getMarket, saveDesigns, getDesigns } from '@/lib/db';
 import { generateCandidates } from '@/services/simulation/generator';
 
 export async function POST(
@@ -8,13 +8,12 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const market = getMarket(id);
+    const market = await getMarket(id);
     if (!market) {
       return NextResponse.json({ error: 'Market not found' }, { status: 404 });
     }
 
     const result = generateCandidates(market);
-
     if (result.designs.length === 0) {
       return NextResponse.json(
         {
@@ -27,17 +26,17 @@ export async function POST(
 
     // Save all designs including baseline
     const allDesigns = [...result.designs, result.baseline];
-    saveDesigns(allDesigns);
+    await saveDesigns(allDesigns);
 
     return NextResponse.json({
-      designs:    result.designs,
-      baseline:   result.baseline,
+      designs: result.designs,
+      baseline: result.baseline,
       violations: result.violations,
     });
   } catch (err) {
     console.error('[POST /api/markets/:id/designs]', err);
     return NextResponse.json(
-      { error: 'Failed to generate designs' },
+      { error: 'Failed to generate designs', message: 'Database operation failed' },
       { status: 500 }
     );
   }
@@ -49,15 +48,17 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const allDesigns = getDesigns(id);
+    const allDesigns = await getDesigns(id);
+
     // Separate baseline from candidates
     const baseline = allDesigns.find((d) => d.name === 'Baseline Market') ?? null;
-    const designs  = allDesigns.filter((d) => d.name !== 'Baseline Market');
+    const designs = allDesigns.filter((d) => d.name !== 'Baseline Market');
+
     return NextResponse.json({ designs, baseline });
   } catch (err) {
     console.error('[GET /api/markets/:id/designs]', err);
     return NextResponse.json(
-      { error: 'Failed to fetch designs' },
+      { error: 'Failed to fetch designs', message: 'Database operation failed' },
       { status: 500 }
     );
   }
