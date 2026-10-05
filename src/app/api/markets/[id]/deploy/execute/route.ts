@@ -13,22 +13,20 @@
  * `recentBlockhash` after deserialization — doing so would invalidate
  * the config keypair's partial signature (recentBlockhash is part of the
  * signed message bytes in legacy Solana transactions).
- *
- * This arrangement keeps the blockhash fresh (the client fetches it
- * immediately before the request) while ensuring the server signs the
- * same bytes the wallet will later submit.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getDeployment, getDesign, getMarket } from '@/lib/db';
 import type { MarketBrief, MarketDesign, SolanaNetwork } from '@/domain/types';
 
+// NOTE: No static imports from @solana/web3.js or @meteora-ag/dynamic-bonding-curve-sdk.
+// All usage is via dynamic import() inside buildWithSdk to prevent webpack from
+// bundling these packages statically (which crashes Vercel serverless functions).
+
 const ExecuteSchema = z.object({
   deploymentId: z.string().min(1),
   walletAddress: z.string().min(32),
   network: z.enum(['devnet', 'mainnet-beta']).default('devnet'),
-  // Client supplies a fresh blockhash fetched immediately before this request.
-  // If omitted the server fetches its own (legacy fallback — less ideal).
   clientBlockhash: z.string().optional(),
 });
 
@@ -65,53 +63,37 @@ export async function POST(
       return NextResponse.json({ error: 'Design not found' }, { status: 404 });
     }
 
-    // ── Validate wallet ──────────────────────────────────────────────────
-    let walletPubkey: PublicKey;
-    try {
-      walletPubkey = new PublicKey(walletAddress);
-    } catch {
-      return NextResponse.json({ error: 'Invalid wallet address' }, { status: 400 });
-    }
-
     // ── Build transaction ────────────────────────────────────────────────
-    let createConfigTxBase64: string;
-    let configAddress: string;
-    let txBlockhash: string;
-    let txLastValidBlockHeight: number;
-    const poolAddress = 'pending_confirmation';
-
+    // walletAddress validation + all Solana work is inside buildWithSdk
+    // so that @solana/web3.js is only loaded via dynamic import at runtime.
     try {
       const result = await buildWithSdk({
         market,
         design,
-        wallet: walletPubkey,
+        walletAddress,
         network: network as SolanaNetwork,
         clientBlockhash,
       });
-      createConfigTxBase64 = result.createConfigTxBase64;
-      configAddress = result.configAddress;
-      txBlockhash = result.blockhash;
-      txLastValidBlockHeight = result.lastValidBlockHeight;
+
+      return NextResponse.json({
+        createConfigTxBase64: result.createConfigTxBase64,
+        configAddress: result.configAddress,
+        poolAddress: 'pending_confirmation',
+        network,
+        blockhash: result.blockhash,
+        lastValidBlockHeight: result.lastValidBlockHeight,
+      });
     } catch (sdkErr) {
       const msg = sdkErr instanceof Error ? sdkErr.message : String(sdkErr);
-      console.error('[deploy/execute] SDK build failed:', msg);
+      console.error('[deploy/execute] build failed:', msg);
       return NextResponse.json(
-        { error: `Failed to build transaction: ${msg}` },
+        { error: `Failed to build transaction: ${msg}`, message: 'Transaction build failed' },
         { status: 500 }
       );
     }
-
-    return NextResponse.json({
-      createConfigTxBase64,
-      configAddress,
-      poolAddress,
-      network,
-      blockhash: txBlockhash,
-      lastValidBlockHeight: txLastValidBlockHeight,
-    });
   } catch (err) {
     console.error('[POST /api/markets/:id/deploy/execute]', err);
-    const message = err instanceof Error ? err.message : 'Failed to build transaction';
+    const message = err instanceof Error ? err.message : 'Unexpected error';
     return NextResponse.json(
       { error: message, message: 'Transaction build failed' },
       { status: 500 }
@@ -123,7 +105,7 @@ export async function POST(
 async function buildWithSdk(params: {
   market: MarketBrief;
   design: MarketDesign;
-  wallet: PublicKey;
+  walletAddress: string;
   network: SolanaNetwork;
   clientBlockhash: string | undefined;
 }): Promise<{
@@ -132,7 +114,19 @@ async function buildWithSdk(params: {
   blockhash: string;
   lastValidBlockHeight: number;
 }> {
-  const { market, design, wallet, network, clientBlockhash } = params;
+  const { market, design, walletAddress, network, clientBlockhash } = params;
+
+  // All @solana/web3.js usage is via dynamic import — no static bundle.
+  const {
+    Connection,
+    PublicKey,
+    Transaction,
+    SystemProgram,
+    Keypair,
+  } = await import('@solana/web3.js');
+
+  // Validate wallet address (throws if invalid → caught by caller)
+  const wallet = new PublicKey(walletAddress);
 
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
   const rpcUrl =
@@ -140,12 +134,10 @@ async function buildWithSdk(params: {
       ? (process.env.NEXT_PUBLIC_SOLANA_RPC_MAINNET ?? 'https://api.mainnet-beta.solana.com')
       : (process.env.NEXT_PUBLIC_SOLANA_RPC_DEVNET ?? 'https://api.devnet.solana.com');
 
-  const { Connection } = await import('@solana/web3.js');
   const connection = new Connection(rpcUrl, 'confirmed');
 
   // ── Demo mode: minimal stub transaction ────────────────────────────────
   if (isDemoMode) {
-    const { Keypair } = await import('@solana/web3.js');
     const configKeypair = Keypair.generate();
 
     let bh: { blockhash: string; lastValidBlockHeight: number };
@@ -157,13 +149,7 @@ async function buildWithSdk(params: {
     }
 
     const tx = new Transaction();
-    tx.add(
-      SystemProgram.transfer({
-        fromPubkey: wallet,
-        toPubkey: wallet,
-        lamports: 0,
-      })
-    );
+    tx.add(SystemProgram.transfer({ fromPubkey: wallet, toPubkey: wallet, lamports: 0 }));
     tx.recentBlockhash = bh.blockhash;
     tx.feePayer = wallet;
 
@@ -190,20 +176,13 @@ async function buildWithSdk(params: {
 
   const client = DynamicBondingCurveClient.create(connection, 'confirmed');
 
-  // ── LP allocation ────────────────────────────────────────────────────────
-  const LP_CREATOR_PERMANENT_LOCK = 10;
-  const LP_CREATOR_UNLOCKED = 100 - LP_CREATOR_PERMANENT_LOCK; // 90
+  // ── LP allocation (must sum to 100) ──────────────────────────────────────
   const lpAlloc = {
     partnerLiquidityPercentage: 0,
     partnerPermanentLockedLiquidityPercentage: 0,
-    creatorLiquidityPercentage: LP_CREATOR_UNLOCKED,
-    creatorPermanentLockedLiquidityPercentage: LP_CREATOR_PERMANENT_LOCK,
+    creatorLiquidityPercentage: 90,
+    creatorPermanentLockedLiquidityPercentage: 10,
   };
-
-  const lpTotal = Object.values(lpAlloc).reduce((a, b) => a + b, 0);
-  if (lpTotal !== 100) {
-    throw new Error(`LP allocation bug: total is ${lpTotal}, expected 100`);
-  }
 
   const builtCurve = buildCurveWithMarketCap({
     token: {
@@ -248,7 +227,6 @@ async function buildWithSdk(params: {
     migrationMarketCap: design.curve.migrationMarketCap,
   });
 
-  const { Keypair } = await import('@solana/web3.js');
   const configKeypair = Keypair.generate();
   const quoteMint = new PublicKey(market.quoteMint);
 
@@ -261,7 +239,7 @@ async function buildWithSdk(params: {
     payer: wallet,
   });
 
-  // ── Determine blockhash to sign over ──────────────────────────────────────
+  // ── Determine blockhash and sign ───────────────────────────────────────────
   const txAny = createConfigTx as unknown;
   const isVersioned =
     txAny !== null &&
@@ -281,13 +259,13 @@ async function buildWithSdk(params: {
     const vt = txAny as { serialize: () => Uint8Array };
     txBuffer = Buffer.from(vt.serialize());
   } else {
-    const lt = txAny as Transaction;
+    const lt = txAny as InstanceType<typeof Transaction>;
 
     let bh: { blockhash: string; lastValidBlockHeight: number };
     if (clientBlockhash) {
       const latest = await connection.getLatestBlockhash('confirmed');
       bh = { blockhash: clientBlockhash, lastValidBlockHeight: latest.lastValidBlockHeight };
-      console.log('[deploy/execute] using client-provided blockhash:', clientBlockhash.slice(0, 8) + '…');
+      console.log('[deploy/execute] using client blockhash:', clientBlockhash.slice(0, 8) + '…');
     } else {
       bh = await connection.getLatestBlockhash('confirmed');
       console.log('[deploy/execute] fetched own blockhash:', bh.blockhash.slice(0, 8) + '…');
@@ -299,18 +277,13 @@ async function buildWithSdk(params: {
     lt.feePayer = wallet;
     lt.partialSign(configKeypair);
 
-    console.log('[deploy/execute] config pubkey:', configKeypair.publicKey.toString().slice(0, 8) + '…');
+    console.log('[deploy/execute] config:', configKeypair.publicKey.toString().slice(0, 8) + '…');
 
     txBuffer = Buffer.from(
       lt.serialize({ requireAllSignatures: false, verifySignatures: false })
     );
-
-    const signedCount = lt.signatures.filter((s) => s.signature !== null).length;
-    console.log(
-      '[deploy/execute] tx size:', txBuffer.length,
-      'bytes | partial signatures:', signedCount,
-      '/ total signers:', lt.signatures.length
-    );
+    const signed = lt.signatures.filter((s) => s.signature !== null).length;
+    console.log(`[deploy/execute] tx ${txBuffer.length}b | ${signed}/${lt.signatures.length} sigs`);
   }
 
   return {
