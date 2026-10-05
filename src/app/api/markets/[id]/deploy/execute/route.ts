@@ -20,11 +20,6 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import {
-  PublicKey,
-  Transaction,
-  SystemProgram,
-} from '@solana/web3.js';
 import { getDeployment, getDesign, getMarket } from '@/lib/db';
 import type { MarketBrief, MarketDesign, SolanaNetwork } from '@/domain/types';
 
