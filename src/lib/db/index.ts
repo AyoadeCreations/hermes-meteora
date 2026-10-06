@@ -178,3 +178,46 @@ export async function getLatestObservation(
   }
   return Promise.resolve((await getSqlite()).getLatestObservation(marketId));
 }
+
+
+// ── Market Objectives ─────────────────────────────────────────────────────
+
+export async function saveObjective(
+  marketId: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  if (USE_POSTGRES) return (await getPg()).saveObjective(marketId, data);
+  return Promise.resolve((await getSqlite()).saveObjective(marketId, data));
+}
+
+export async function getObjective(
+  marketId: string
+): Promise<Record<string, unknown> | null> {
+  if (USE_POSTGRES) return (await getPg()).getObjective(marketId);
+  return Promise.resolve((await getSqlite()).getObjective(marketId));
+}
+
+// ── Launch Outcomes ───────────────────────────────────────────────────────
+
+export async function saveLaunchOutcome(params: {
+  marketId: string;
+  selectedPlanId: string | null;
+  selectedPlanName: string | null;
+  selectedDesignId: string;
+  transactionSignature: string | null;
+  poolAddress: string | null;
+  configAddress: string | null;
+  launchTimestamp: string;
+  configurationSnapshot: string;
+  objectiveSnapshot: string | null;
+}): Promise<void> {
+  if (USE_POSTGRES) return (await getPg()).saveLaunchOutcome(params);
+  return Promise.resolve((await getSqlite()).saveLaunchOutcome(params));
+}
+
+export async function getLaunchOutcome(
+  marketId: string
+): Promise<Record<string, unknown> | null> {
+  if (USE_POSTGRES) return (await getPg()).getLaunchOutcome(marketId);
+  return Promise.resolve((await getSqlite()).getLaunchOutcome(marketId));
+}

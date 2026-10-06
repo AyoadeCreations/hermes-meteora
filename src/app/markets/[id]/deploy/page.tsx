@@ -287,6 +287,34 @@ export default function DeployPage() {
         durationMs: Date.now() - deployStart,
       });
 
+      // ── Step 6: Record launch outcome for future Plan-vs-Reality analysis
+      try {
+        const objRes = await fetch(`/api/markets/${id}/objective`);
+        const { objective: savedObjective } = await objRes.json() as { objective: unknown };
+
+        const planParam = new URLSearchParams(window.location.search).get('plan');
+
+        await fetch(`/api/markets/${id}/outcome`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            selectedPlanId:         planParam ?? null,
+            selectedPlanName:       null,
+            selectedDesignId:       design?.id ?? '',
+            transactionSignature:   signature,
+            poolAddress:            null,
+            configAddress:          configAddress ?? null,
+            launchTimestamp:        new Date().toISOString(),
+            configurationSnapshot:  JSON.stringify(design ?? {}),
+            objectiveSnapshot:      savedObjective ? JSON.stringify(savedObjective) : null,
+          }),
+        });
+        track('launch_outcome_recorded', { marketId: safeId(id) });
+      } catch {
+        // Outcome capture is best-effort — never block the success flow
+        console.warn('[deploy] Failed to record launch outcome');
+      }
+
       setStatusMsg('');
       setTimeout(() => router.push(`/markets/${id}`), 1500);
 

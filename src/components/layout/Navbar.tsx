@@ -107,10 +107,11 @@ function NetworkIndicator() {
 
 interface BreadcrumbItem { label: string; href?: string; }
 
-export function PageLayout({ children, breadcrumbs, title, actions }: {
+export function PageLayout({ children, breadcrumbs, title, subtitle, actions }: {
   children:     React.ReactNode;
   breadcrumbs?: BreadcrumbItem[];
   title?:       string;
+  subtitle?:    string;
   actions?:     React.ReactNode;
 }) {
   return (
@@ -146,6 +147,9 @@ export function PageLayout({ children, breadcrumbs, title, actions }: {
                   <span className="text-sm font-semibold text-text-primary">{title}</span>
                 )}
               </div>
+              {subtitle && (
+                <p className="text-xs text-text-tertiary mt-0.5 truncate max-w-lg">{subtitle}</p>
+              )}
               {actions && (
                 <div className="flex items-center gap-2 shrink-0 ml-4">{actions}</div>
               )}
@@ -164,12 +168,15 @@ export function PageLayout({ children, breadcrumbs, title, actions }: {
 // ── Market sub-nav ──────────────────────────────────────────────────────────
 
 const MARKET_TABS = [
-  { label: 'Design',   href: (id: string) => `/markets/${id}/design`   },
-  { label: 'Simulate', href: (id: string) => `/markets/${id}/simulate` },
-  { label: 'Compare',  href: (id: string) => `/markets/${id}/compare`  },
-  { label: 'Deploy',   href: (id: string) => `/markets/${id}/deploy`   },
-  { label: 'Monitor',  href: (id: string) => `/markets/${id}`          },
-  { label: 'Analysis', href: (id: string) => `/markets/${id}/analysis` },
+  { label: 'Objective', href: (id: string) => `/markets/${id}/objective` },
+  { label: 'Plans',     href: (id: string) => `/markets/${id}/plans`     },
+  { label: 'Verify',    href: (id: string) => `/markets/${id}/verify`    },
+  { label: 'Design',    href: (id: string) => `/markets/${id}/design`    },
+  { label: 'Simulate',  href: (id: string) => `/markets/${id}/simulate`  },
+  { label: 'Compare',   href: (id: string) => `/markets/${id}/compare`   },
+  { label: 'Deploy',    href: (id: string) => `/markets/${id}/deploy`    },
+  { label: 'Monitor',   href: (id: string) => `/markets/${id}`           },
+  { label: 'Analysis',  href: (id: string) => `/markets/${id}/analysis`  },
 ] as const;
 
 export function MarketSubNav({ marketId }: { marketId: string }) {

@@ -80,4 +80,33 @@ CREATE TABLE IF NOT EXISTS observations (
 
 CREATE INDEX IF NOT EXISTS idx_observations_market_id_ts
   ON observations(market_id, timestamp DESC);
+
+-- ── Market Objectives ──────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS market_objectives (
+  id          TEXT PRIMARY KEY,
+  market_id   TEXT NOT NULL REFERENCES markets(id) ON DELETE CASCADE,
+  data        TEXT NOT NULL,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_objectives_market_id ON market_objectives(market_id);
+
+-- ── Launch Outcomes ────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS launch_outcomes (
+  id                     TEXT PRIMARY KEY,
+  market_id              TEXT NOT NULL REFERENCES markets(id) ON DELETE CASCADE,
+  selected_plan_id       TEXT,
+  selected_plan_name     TEXT,
+  selected_design_id     TEXT NOT NULL,
+  transaction_signature  TEXT,
+  pool_address           TEXT,
+  config_address         TEXT,
+  launch_timestamp       TEXT NOT NULL,
+  configuration_snapshot TEXT NOT NULL,
+  objective_snapshot     TEXT,
+  created_at             TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_outcomes_market_id ON launch_outcomes(market_id);
 `;

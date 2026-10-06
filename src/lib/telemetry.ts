@@ -13,12 +13,26 @@
  */
 
 export type TelemetryEvent =
+  // ── Market Formation Intelligence ─────────────────────────────────────────
+  | 'market_objective_started'
+  | 'market_objective_completed'
+  | 'formation_plans_generated'
+  | 'formation_plan_viewed'
+  | 'formation_plan_selected'
+  | 'scenario_run'
+  | 'scenario_compared'
+  | 'risk_viewed'
+  | 'verification_viewed'
+  | 'launch_outcome_recorded'
+  // ── Wallet ─────────────────────────────────────────────────────────────────
   | 'wallet_connect_started'
   | 'wallet_connected'
   | 'wallet_connect_failed'
   | 'wallet_disconnected'
+  // ── Market creation ────────────────────────────────────────────────────────
   | 'market_creation_started'
   | 'market_configuration_viewed'
+  // ── Deployment ─────────────────────────────────────────────────────────────
   | 'deployment_started'
   | 'deployment_transaction_signed'
   | 'deployment_submitted'
@@ -27,13 +41,13 @@ export type TelemetryEvent =
   | 'deployment_cancelled';
 
 export interface TelemetryPayload {
-  event:      TelemetryEvent;
-  ts:         string;           // ISO timestamp
-  marketId?:  string;           // truncated
-  wallet?:    string;           // first 8 chars only
-  network?:   string;
-  errorMsg?:  string;           // sanitised error message (no keys/seeds)
-  durationMs?: number;          // elapsed time where relevant
+  event: TelemetryEvent;
+  ts: string;         // ISO timestamp
+  marketId?: string;  // truncated
+  wallet?: string;    // first 8 chars only
+  network?: string;
+  errorMsg?: string;  // sanitised error message (no keys/seeds)
+  durationMs?: number;
   [key: string]: string | number | boolean | undefined;
 }
 
@@ -44,7 +58,10 @@ const _sessionStart = Date.now();
  * Track a validation funnel event.
  * In production, swap the console.log body for a real sink call.
  */
-export function track(event: TelemetryEvent, meta: Omit<TelemetryPayload, 'event' | 'ts'> = {}): void {
+export function track(
+  event: TelemetryEvent,
+  meta: Omit<TelemetryPayload, 'event' | 'ts'> = {}
+): void {
   const payload: TelemetryPayload = {
     event,
     ts: new Date().toISOString(),
@@ -66,6 +83,7 @@ export function track(event: TelemetryEvent, meta: Omit<TelemetryPayload, 'event
   if (process.env.NODE_ENV === 'production') {
     // Reserved for future analytics integration.
     // Example: void fetch('/api/telemetry', { method: 'POST', body: JSON.stringify(payload) });
+    void _sessionStart; // suppress unused-var warning
   }
 }
 

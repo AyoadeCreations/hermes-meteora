@@ -334,3 +334,82 @@ export function getLatestObservation(marketId: string): MarketObservation | null
     graduationProgress: row['graduation_progress'] as number,
   };
 }
+
+// ── Market Objectives ─────────────────────────────────────────────────────
+
+export function saveObjective(
+  marketId: string,
+  data: Record<string, unknown>
+): void {
+  const db = getDb();
+  const existing = db
+    .prepare('SELECT id FROM market_objectives WHERE market_id = ?')
+    .get(marketId) as { id: string } | undefined;
+
+  const now = new Date().toISOString();
+  if (existing) {
+    db.prepare(
+      'UPDATE market_objectives SET data = ?, updated_at = ? WHERE market_id = ?'
+    ).run(JSON.stringify(data), now, marketId);
+  } else {
+    const nid = nanoid;
+    db.prepare(
+      'INSERT INTO market_objectives (id, market_id, data, created_at, updated_at) VALUES (?,?,?,?,?)'
+    ).run(nanoid(16), marketId, JSON.stringify(data), now, now);
+  }
+}
+
+export function getObjective(marketId: string): Record<string, unknown> | null {
+  const db = getDb();
+  const row = db
+    .prepare('SELECT data FROM market_objectives WHERE market_id = ?')
+    .get(marketId) as { data: string } | undefined;
+  if (!row) return null;
+  return JSON.parse(row.data) as Record<string, unknown>;
+}
+
+// ── Launch Outcomes ───────────────────────────────────────────────────────
+
+export function saveLaunchOutcome(params: {
+  marketId: string;
+  selectedPlanId: string | null;
+  selectedPlanName: string | null;
+  selectedDesignId: string;
+  transactionSignature: string | null;
+  poolAddress: string | null;
+  configAddress: string | null;
+  launchTimestamp: string;
+  configurationSnapshot: string;
+  objectiveSnapshot: string | null;
+}): void {
+  const db = getDb();
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO launch_outcomes (
+      id, market_id, selected_plan_id, selected_plan_name, selected_design_id,
+      transaction_signature, pool_address, config_address, launch_timestamp,
+      configuration_snapshot, objective_snapshot, created_at
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+  `).run(
+    nanoid(16),
+    params.marketId,
+    params.selectedPlanId,
+    params.selectedPlanName,
+    params.selectedDesignId,
+    params.transactionSignature,
+    params.poolAddress,
+    params.configAddress,
+    params.launchTimestamp,
+    params.configurationSnapshot,
+    params.objectiveSnapshot,
+    now
+  );
+}
+
+export function getLaunchOutcome(marketId: string): Record<string, unknown> | null {
+  const db = getDb();
+  const row = db
+    .prepare('SELECT * FROM launch_outcomes WHERE market_id = ? ORDER BY created_at DESC LIMIT 1')
+    .get(marketId) as Record<string, unknown> | undefined;
+  return row ?? null;
+}

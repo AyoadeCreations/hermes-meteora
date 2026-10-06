@@ -398,3 +398,105 @@ export const QUOTE_MINTS: Record<string, { label: string; decimals: number }> = 
   [SOL_MINT]:         { label: 'SOL',  decimals: 9 },
   [USDC_DEVNET_MINT]: { label: 'USDC', decimals: 6 },
 };
+
+// ── Formation Plan ────────────────────────────────────────────────────────
+// A candidate market design derived from a MarketObjective.
+// Three plans are always generated: conservative, balanced, aggressive.
+
+import type { MarketObjectiveInput } from './market-objective';
+
+export type FormationPlanTier = 'conservative' | 'balanced' | 'aggressive';
+
+export interface FormationPlanAssumptions {
+  /** Demand scenario used as the baseline for plan generation */
+  demandScenario: 'low' | 'moderate' | 'high';
+  /** Estimated active traders at launch */
+  estimatedTraders: number;
+  /** Estimated daily trading volume in quote asset */
+  estimatedDailyVolume: number;
+  /** Notes on model limitations */
+  modelNotes: string[];
+}
+
+export interface FormationPlanExpectedOutcomes {
+  /** Estimated graduation progress under expected demand (0–100) */
+  graduationProgressPct: number;
+  /** Narrative description of expected price behaviour */
+  priceBehavior: string;
+  /** Estimated days to graduation under expected demand (null = not modeled) */
+  daysToGraduation: number | null;
+  /** Fee income estimate relative to baseline — 'higher' / 'similar' / 'lower' */
+  feeProfile: 'higher' | 'similar' | 'lower';
+}
+
+export interface FormationPlan {
+  id: string;
+  marketId: string;
+  /** conservative | balanced | aggressive */
+  tier: FormationPlanTier;
+  name: string;
+  shortDescription: string;
+  /** Why this plan fits the user's objective */
+  rationale: string;
+  /** The DBC MarketDesign id this plan maps to (after designs are generated) */
+  marketDesignId?: string;
+  /** Snapshot of DBC config parameters for display before design generation */
+  dbcConfiguration: {
+    curveMode: string;
+    initialMarketCapSol: number;
+    migrationMarketCapSol: number;
+    baseFeeBps: number;
+    dynamicFeeEnabled: boolean;
+    creatorFeePercentage: number;
+    segmentCount: number;
+    liquidityProfile: string;
+  };
+  assumptions: FormationPlanAssumptions;
+  expectedOutcomes: FormationPlanExpectedOutcomes;
+  risks: string[];
+  /** Normalised recommendation score [0, 1] produced by recommend.ts */
+  recommendationScore: number;
+  /** Whether this plan is the recommended one */
+  isRecommended: boolean;
+  /** 2–4 concise reasons for the recommendation score */
+  recommendationReasons: string[];
+  createdAt: string;
+}
+
+// ── Risk Signal ───────────────────────────────────────────────────────────
+
+export type RiskSeverity = 'low' | 'medium' | 'high';
+
+export interface RiskSignal {
+  id: string;
+  severity: RiskSeverity;
+  title: string;
+  explanation: string;
+  /** Which configuration parameter this relates to */
+  affectedParameter: string;
+}
+
+// ── Launch Outcome ────────────────────────────────────────────────────────
+// Preserved at deployment confirmation for future Plan-vs-Reality analysis.
+
+export interface LaunchOutcome {
+  id: string;
+  marketId: string;
+  /** The FormationPlan id selected */
+  selectedPlanId: string | null;
+  selectedPlanName: string | null;
+  /** The MarketDesign id deployed */
+  selectedDesignId: string;
+  /** Deployment transaction signature */
+  transactionSignature: string | null;
+  /** On-chain pool address */
+  poolAddress: string | null;
+  /** On-chain config account address */
+  configAddress: string | null;
+  /** ISO-8601 timestamp of confirmation */
+  launchTimestamp: string;
+  /** Full snapshot of the deployed MarketDesign configuration (JSON) */
+  configurationSnapshot: string;
+  /** Full snapshot of the MarketObjective at launch time (JSON, null if no objective recorded) */
+  objectiveSnapshot: string | null;
+}

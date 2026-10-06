@@ -361,3 +361,91 @@ function rowToObservation(row: Record<string, unknown>): MarketObservation {
     graduationProgress: Number(row['graduation_progress']),
   };
 }
+
+
+// ── Market Objectives ─────────────────────────────────────────────────────
+
+export async function saveObjective(
+  marketId: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  const pool = await db();
+  const { rows } = await pool.query(
+    'SELECT id FROM market_objectives WHERE market_id = $1',
+    [marketId]
+  );
+  const now = new Date().toISOString();
+  if (rows.length > 0) {
+    await pool.query(
+      'UPDATE market_objectives SET data = $1, updated_at = $2 WHERE market_id = $3',
+      [JSON.stringify(data), now, marketId]
+    );
+  } else {
+    await pool.query(
+      'INSERT INTO market_objectives (id, market_id, data, created_at, updated_at) VALUES ($1,$2,$3,$4,$5)',
+      [nanoid(16), marketId, JSON.stringify(data), now, now]
+    );
+  }
+}
+
+export async function getObjective(
+  marketId: string
+): Promise<Record<string, unknown> | null> {
+  const pool = await db();
+  const { rows } = await pool.query(
+    'SELECT data FROM market_objectives WHERE market_id = $1',
+    [marketId]
+  );
+  if (rows.length === 0) return null;
+  return JSON.parse(rows[0].data as string) as Record<string, unknown>;
+}
+
+// ── Launch Outcomes ───────────────────────────────────────────────────────
+
+export async function saveLaunchOutcome(params: {
+  marketId: string;
+  selectedPlanId: string | null;
+  selectedPlanName: string | null;
+  selectedDesignId: string;
+  transactionSignature: string | null;
+  poolAddress: string | null;
+  configAddress: string | null;
+  launchTimestamp: string;
+  configurationSnapshot: string;
+  objectiveSnapshot: string | null;
+}): Promise<void> {
+  const pool = await db();
+  const now = new Date().toISOString();
+  await pool.query(
+    `INSERT INTO launch_outcomes (
+      id, market_id, selected_plan_id, selected_plan_name, selected_design_id,
+      transaction_signature, pool_address, config_address, launch_timestamp,
+      configuration_snapshot, objective_snapshot, created_at
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+    [
+      nanoid(16),
+      params.marketId,
+      params.selectedPlanId,
+      params.selectedPlanName,
+      params.selectedDesignId,
+      params.transactionSignature,
+      params.poolAddress,
+      params.configAddress,
+      params.launchTimestamp,
+      params.configurationSnapshot,
+      params.objectiveSnapshot,
+      now,
+    ]
+  );
+}
+
+export async function getLaunchOutcome(
+  marketId: string
+): Promise<Record<string, unknown> | null> {
+  const pool = await db();
+  const { rows } = await pool.query(
+    'SELECT * FROM launch_outcomes WHERE market_id = $1 ORDER BY created_at DESC LIMIT 1',
+    [marketId]
+  );
+  return rows[0] ?? null;
+}
