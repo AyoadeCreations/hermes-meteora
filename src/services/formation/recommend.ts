@@ -28,7 +28,7 @@ const SCORING_RULES: ScoringRule[] = [
   {
     applies: (p, o) => o.riskPreference === 'conservative' && p.tier === 'conservative',
     delta: 0.3,
-    reason: () => 'Matches your conservative risk preference.',
+    reason: () => 'Liquidity First matches your conservative risk preference.',
   },
   {
     applies: (p, o) => o.riskPreference === 'balanced' && p.tier === 'balanced',
@@ -38,98 +38,97 @@ const SCORING_RULES: ScoringRule[] = [
   {
     applies: (p, o) => o.riskPreference === 'aggressive' && p.tier === 'aggressive',
     delta: 0.3,
-    reason: () => 'Matches your aggressive growth preference.',
+    reason: () => 'Price Discovery First matches your preference for faster outcomes.',
   },
   // Penalise strong mismatches
   {
     applies: (p, o) => o.riskPreference === 'conservative' && p.tier === 'aggressive',
     delta: -0.4,
-    reason: () => 'Conflicts with your conservative risk preference.',
+    reason: () => 'Price Discovery First conflicts with your conservative risk preference.',
   },
   {
     applies: (p, o) => o.riskPreference === 'aggressive' && p.tier === 'conservative',
     delta: -0.25,
-    reason: () => 'Conservative plan may be too slow for your growth goals.',
+    reason: () => 'Liquidity First may be too slow for your growth goals.',
   },
 
   // ── Demand alignment ────────────────────────────────────────────────────
   {
     applies: (p, o) => o.expectedDemand === 'low' && p.tier === 'conservative',
     delta: 0.25,
-    reason: () => 'Conservative plan is appropriate for low expected demand.',
+    reason: () => 'Liquidity First is appropriate for low expected demand — lower price sensitivity reduces risk.',
   },
   {
     applies: (p, o) => o.expectedDemand === 'high' && p.tier === 'aggressive',
     delta: 0.2,
-    reason: () => 'Aggressive plan makes efficient use of high demand.',
+    reason: () => 'Price Discovery First makes efficient use of high demand for faster graduation.',
   },
   {
     applies: (p, o) => o.expectedDemand === 'low' && p.tier === 'aggressive',
     delta: -0.35,
-    reason: () => 'Aggressive plan is unlikely to perform well with low demand.',
+    reason: () => 'Price Discovery First is unlikely to perform well with low expected demand.',
   },
 
   // ── Objective alignment ─────────────────────────────────────────────────
   {
     applies: (p, o) => o.objectives.includes('earlyLiquidity') && p.tier === 'conservative',
     delta: 0.2,
-    reason: () => 'Conservative plans concentrate liquidity early, supporting your liquidity goal.',
+    reason: () => 'Liquidity First concentrates liquidity early, directly supporting your liquidity goal.',
   },
   {
     applies: (p, o) => o.objectives.includes('bootstrapTrading') && p.tier === 'aggressive',
     delta: 0.2,
-    reason: () => 'Lower fees in the aggressive plan encourage the trading activity you want to bootstrap.',
+    reason: () => 'Lower fees in Price Discovery First encourage the trading activity you want to bootstrap.',
   },
   {
     applies: (p, o) => o.objectives.includes('targetMarketCap') && p.tier !== 'conservative',
     delta: 0.1,
-    reason: (p) => `${capitalize(p.tier)} plan reaches graduation more efficiently.`,
+    reason: (p) => `${capitalize(p.name)} reaches graduation more efficiently.`,
   },
   {
     applies: (p, o) => o.objectives.includes('durableMarket') && p.tier === 'conservative',
     delta: 0.2,
-    reason: () => 'Conservative plan\'s lower volatility supports long-term market durability.',
+    reason: () => 'Liquidity First\'s lower price sensitivity supports long-term market durability.',
   },
   {
     applies: (p, o) => o.objectives.includes('priceDiscovery') && p.tier === 'balanced',
     delta: 0.15,
-    reason: () => 'Balanced plan provides steady price discovery without extremes.',
+    reason: () => 'Balanced Formation provides steady price discovery without extremes.',
   },
   {
     applies: (p, o) => o.objectives.includes('demandTesting') && p.tier === 'balanced',
     delta: 0.15,
-    reason: () => 'Balanced plan gives a clear read on demand without distorting with extreme parameters.',
+    reason: () => 'Balanced Formation gives a clear read on demand without distorting with extreme parameters.',
   },
 
   // ── Desired behavior alignment ───────────────────────────────────────────
   {
     applies: (p, o) => o.desiredBehavior.includes('lowerVolatility') && p.tier === 'conservative',
     delta: 0.2,
-    reason: () => 'Conservative curve produces the most stable price progression.',
+    reason: () => 'Liquidity First produces the most stable price progression.',
   },
   {
     applies: (p, o) => o.desiredBehavior.includes('fasterGraduation') && p.tier === 'aggressive',
     delta: 0.2,
-    reason: () => 'Aggressive plan is optimised for reaching graduation quickly.',
+    reason: () => 'Price Discovery First is optimised for reaching graduation quickly.',
   },
   {
     applies: (p, o) => o.desiredBehavior.includes('strongerEarlyLiquidity') && p.tier === 'conservative',
     delta: 0.15,
-    reason: () => 'Conservative plan\'s concentrated early liquidity reduces buyer slippage.',
+    reason: () => 'Liquidity First\'s concentrated early liquidity reduces buyer slippage.',
   },
   {
     applies: (p, o) => o.desiredBehavior.includes('discourageRapidTrading') && p.tier === 'conservative',
     delta: 0.15,
-    reason: () => 'Higher fees in the conservative plan naturally discourage rapid flipping.',
+    reason: () => 'Higher fees in Liquidity First naturally discourage rapid flipping.',
   },
   {
     applies: (p, o) => o.desiredBehavior.includes('fasterPriceDiscovery') && p.tier !== 'conservative',
     delta: 0.1,
-    reason: (p) => `${capitalize(p.tier)} plan responds faster to demand, supporting quicker price discovery.`,
+    reason: (p) => `${capitalize(p.name)} responds faster to demand, supporting quicker price discovery.`,
   },
 
   // ── Balanced plan baseline bonus ────────────────────────────────────────
-  // Balanced plans get a small bonus unless the user has a strong preference either way.
   {
     applies: (p, o) =>
       p.tier === 'balanced' &&
@@ -137,7 +136,7 @@ const SCORING_RULES: ScoringRule[] = [
       !o.objectives.includes('durableMarket') &&
       !o.objectives.includes('bootstrapTrading'),
     delta: 0.1,
-    reason: () => 'Balanced plan is a solid default for balanced risk with no strong directional preference.',
+    reason: () => 'Balanced Formation is a solid default for balanced risk with no strong directional preference.',
   },
 ];
 

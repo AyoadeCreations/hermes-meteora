@@ -1,80 +1,168 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { WalletButton } from '@/components/ui/WalletButton';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
-import { BarChart3, Plus, ChevronRight } from 'lucide-react';
+import { ChevronRight, Menu, X, Plus } from 'lucide-react';
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
+// ── Logo — uses the actual /public/logo.svg asset ────────────────────────────
+// Falls back to inline H-mark only if the Image fails to load (should never happen).
+
+function HermesLogo({ className }: { className?: string }) {
+  return (
+    <Image
+      src="/logo.svg"
+      alt="HERMES"
+      width={112}
+      height={28}
+      priority
+      className={className}
+    />
+  );
+}
 
 // ── Navbar ──────────────────────────────────────────────────────────────────
 
 export function Navbar() {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className={cn(
-      'fixed top-0 left-0 right-0 z-40 h-12',
-      'flex items-center',
-      'bg-bg-base/80 backdrop-blur-xl',
-      'border-b border-border'
-    )}>
-      <div className="w-full max-w-screen-2xl mx-auto px-5 flex items-center justify-between">
+    <>
+      <header className={cn(
+        'fixed top-0 left-0 right-0 z-40 h-14',
+        'flex items-center',
+        'bg-bg-base/90 backdrop-blur-xl',
+        'border-b border-border'
+      )}>
+        <div className="w-full max-w-screen-xl mx-auto px-5 flex items-center justify-between gap-6">
 
-        {/* Brand */}
-        <Link
-          href="/"
-          className="flex items-center gap-2.5 shrink-0 group"
-        >
-          <div className="w-6 h-6 rounded-lg bg-accent flex items-center justify-center shadow-glow-sm
-                          transition-[box-shadow] duration-150 group-hover:shadow-glow">
-            <BarChart3 className="w-3.5 h-3.5 text-white" />
+          {/* ── Brand ── */}
+          <Link
+            href="/"
+            className="flex items-center gap-0 shrink-0 group"
+            aria-label="HERMES — home"
+          >
+            <HermesLogo className="h-7 w-auto transition-opacity duration-150 group-hover:opacity-90" />
+            {DEMO_MODE && <Badge variant="warning" className="ml-2">Demo</Badge>}
+          </Link>
+
+          {/* ── Desktop nav ── */}
+          <nav className="hidden md:flex items-center gap-0.5 flex-1" aria-label="Primary navigation">
+            <NavLink href="/#how-it-works" label="How It Works" active={false} />
+            <NavLink href="/"             label="Markets"      active={pathname === '/'} />
+            <NavLink href="https://docs.meteora.ag/dynamic-bonding-curve/dbc-integration/overview" label="Docs" active={false} external />
+          </nav>
+
+          {/* ── Right side ── */}
+          <div className="hidden md:flex items-center gap-3">
+            <NetworkIndicator />
+            <WalletButton />
+            <Link href="/markets/new">
+              <Button variant="primary" size="sm" icon={<Plus className="w-3.5 h-3.5" />}>
+                Start a Market
+              </Button>
+            </Link>
           </div>
-          <span className="text-sm font-semibold text-text-primary tracking-tight">
-            HERMES
-          </span>
-          {DEMO_MODE && <Badge variant="warning" className="ml-0.5">Demo</Badge>}
-        </Link>
 
-        {/* Nav links */}
-        <nav className="hidden md:flex items-center gap-0.5">
-          <NavLink href="/"            active={pathname === '/'}            label="Markets" />
-          <NavLink href="/markets/new" active={pathname === '/markets/new'} label="New Market" highlight />
-        </nav>
-
-        {/* Right side */}
-        <div className="flex items-center gap-2">
-          <NetworkIndicator />
-          <WalletButton />
+          {/* ── Mobile: wallet + hamburger ── */}
+          <div className="flex md:hidden items-center gap-2">
+            <WalletButton />
+            <button
+              type="button"
+              onClick={() => setMobileOpen(v => !v)}
+              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* ── Mobile drawer ── */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-30 md:hidden" onClick={() => setMobileOpen(false)}>
+          <div
+            className={cn(
+              'absolute top-14 left-0 right-0',
+              'bg-bg-base/95 backdrop-blur-xl border-b border-border',
+              'py-3 px-5 space-y-1 animate-slide-up'
+            )}
+            onClick={e => e.stopPropagation()}
+          >
+            <MobileNavLink href="/#how-it-works" label="How It Works"  onClick={() => setMobileOpen(false)} />
+            <MobileNavLink href="/"              label="Markets"       onClick={() => setMobileOpen(false)} />
+            <MobileNavLink href="https://docs.meteora.ag/dynamic-bonding-curve/dbc-integration/overview" label="Docs" onClick={() => setMobileOpen(false)} external />
+            <div className="pt-2 border-t border-border">
+              <Link href="/markets/new" onClick={() => setMobileOpen(false)}>
+                <Button variant="primary" size="md" className="w-full justify-center" icon={<Plus className="w-4 h-4" />}>
+                  Start a Market
+                </Button>
+              </Link>
+            </div>
+            <div className="pt-1">
+              <NetworkIndicator />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
-// ── NavLink ─────────────────────────────────────────────────────────────────
+// ── Desktop NavLink ──────────────────────────────────────────────────────────
 
-function NavLink({ href, active, label, highlight }: {
-  href: string; active: boolean; label: string; highlight?: boolean;
+function NavLink({ href, active, label, external }: {
+  href: string; active: boolean; label: string; external?: boolean;
 }) {
+  const cls = cn(
+    'px-3 py-1.5 rounded-lg text-sm',
+    'transition-[background-color,color] duration-150',
+    active
+      ? 'text-text-primary bg-bg-elevated'
+      : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+  );
+
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+        {label}
+      </a>
+    );
+  }
+
   return (
-    <Link
-      href={href}
-      className={cn(
-        'px-3 py-1.5 rounded-lg text-sm',
-        // Specific transitions — never `all`
-        'transition-[background-color,color] duration-150',
-        active
-          ? 'text-text-primary bg-bg-elevated'
-          : highlight
-          ? 'text-accent hover:text-accent-hover hover:bg-accent-subtle'
-          : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-      )}
-    >
-      {highlight && <Plus className="inline w-3 h-3 mr-1 -mt-0.5" />}
+    <Link href={href} className={cls}>
+      {label}
+    </Link>
+  );
+}
+
+// ── Mobile NavLink ───────────────────────────────────────────────────────────
+
+function MobileNavLink({ href, label, onClick, external }: {
+  href: string; label: string; onClick: () => void; external?: boolean;
+}) {
+  const cls = 'flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors';
+
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={cls} onClick={onClick}>
+        {label}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className={cls} onClick={onClick}>
       {label}
     </Link>
   );
@@ -117,10 +205,10 @@ export function PageLayout({ children, breadcrumbs, title, subtitle, actions }: 
   return (
     <div className="min-h-screen bg-bg-base">
       <Navbar />
-      <main className="pt-12">
+      <main className="pt-14">
         {(breadcrumbs || title) && (
           <div className="border-b border-border bg-bg-surface/40 backdrop-blur-sm">
-            <div className="max-w-screen-2xl mx-auto px-5 py-2.5 flex items-center justify-between">
+            <div className="max-w-screen-xl mx-auto px-5 py-2.5 flex items-center justify-between">
               <div className="flex items-center gap-1.5 min-w-0">
                 {breadcrumbs?.map((b, i) => (
                   <React.Fragment key={i}>
@@ -136,7 +224,6 @@ export function PageLayout({ children, breadcrumbs, title, subtitle, actions }: 
                         {b.label}
                       </Link>
                     ) : (
-                      /* Current page — high-contrast */
                       <span className="text-xs text-text-primary font-medium truncate">
                         {b.label}
                       </span>
@@ -156,8 +243,7 @@ export function PageLayout({ children, breadcrumbs, title, subtitle, actions }: 
             </div>
           </div>
         )}
-        {/* Page entrance animation */}
-        <div className="max-w-screen-2xl mx-auto px-5 py-6 animate-fade-in">
+        <div className="max-w-screen-xl mx-auto px-5 py-6 animate-fade-in">
           {children}
         </div>
       </main>
@@ -184,7 +270,7 @@ export function MarketSubNav({ marketId }: { marketId: string }) {
 
   return (
     <div className="border-b border-border bg-bg-surface/30">
-      <div className="max-w-screen-2xl mx-auto px-5">
+      <div className="max-w-screen-xl mx-auto px-5">
         <nav className="flex -mb-px gap-0">
           {MARKET_TABS.map((tab) => {
             const href   = tab.href(marketId);
@@ -198,7 +284,6 @@ export function MarketSubNav({ marketId }: { marketId: string }) {
                 href={href}
                 className={cn(
                   'px-4 py-3 text-xs font-medium border-b-2',
-                  // Specific transitions — never `all`
                   'transition-[color,border-color] duration-150',
                   active
                     ? 'border-accent text-accent'

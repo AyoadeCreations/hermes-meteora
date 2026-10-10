@@ -14,6 +14,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { ExternalLink, RefreshCw } from 'lucide-react';
+import { MarketConditionCard } from '@/components/ui/MarketConditionCard';
+import { deriveMarketCondition } from '@/services/market-condition/deriveMarketCondition';
 
 const NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? 'devnet';
 const EXPLORER_BASE = NETWORK === 'mainnet-beta'
@@ -58,8 +60,11 @@ export default function MarketMonitorPage() {
 
   if (loading) return <PageLayout><LoadingState /></PageLayout>;
 
-  const latest    = observations[observations.length - 1];
+  const latest     = observations[observations.length - 1];
   const isDeployed = deployment?.status === 'confirmed';
+
+  // Derive market condition from real observations only — never fabricated
+  const condition = deriveMarketCondition(observations);
 
   // Build chart data from observations
   const priceChartData = observations.map((o) => ({
@@ -182,6 +187,14 @@ export default function MarketMonitorPage() {
               <p className="mt-2 text-xs text-success">🎓 Graduation threshold reached — migration pending</p>
             )}
           </Card>
+        )}
+
+        {/* Market Condition — derived from real observations only */}
+        {(isDeployed || observations.length > 0) && (
+          <MarketConditionCard
+            condition={condition}
+            className="animate-fade-in"
+          />
         )}
 
         {/* Charts */}

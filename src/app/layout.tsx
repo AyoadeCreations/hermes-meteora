@@ -18,8 +18,24 @@ const fontMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title:       'HERMES',
-  description: 'Design the market before you launch. Objective-driven DBC configuration, simulation, and deployment on Meteora.',
+  title:       'HERMES — Market Formation for New Onchain Assets',
+  description: 'HERMES helps token creators and launch teams design, simulate, and validate market formation strategies before deploying on Meteora.',
+  icons: {
+    icon:     '/favicon.svg',
+    shortcut: '/favicon.svg',
+  },
+  openGraph: {
+    title:       'HERMES — Market Formation for New Onchain Assets',
+    description: 'Design, simulate, and validate your market formation strategy before deploying real capital on Meteora.',
+    url:         'https://hermes-meteora.vercel.app',
+    siteName:    'HERMES',
+    type:        'website',
+  },
+  twitter: {
+    card:        'summary',
+    title:       'HERMES — Market Formation for New Onchain Assets',
+    description: 'Design, simulate, and validate your market formation strategy before deploying real capital on Meteora.',
+  },
 };
 
 // themeColor must be in viewport export in Next.js 15 (not metadata)

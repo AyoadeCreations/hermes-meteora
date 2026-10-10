@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 32" fill="none">
+  <!-- Icon mark: geometric H on indigo square -->
+  <rect width="32" height="32" rx="7" fill="#5E6AD2"/>
+  <rect x="8" y="8" width="3.5" height="16" rx="1" fill="white"/>
+  <rect x="20.5" y="8" width="3.5" height="16" rx="1" fill="white"/>
+  <rect x="8" y="13.5" width="16" height="3" rx="1" fill="white"/>
+  <!-- Wordmark: HERMES -->
+  <text x="42" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif" font-size="16" font-weight="600" letter-spacing="-0.3" fill="#EDEDEF">HERMES</text>
+</svg>

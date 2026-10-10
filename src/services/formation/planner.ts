@@ -93,8 +93,8 @@ function objectiveAdjustments(
 const BASE_TEMPLATES: PlanTemplate[] = [
   {
     tier: 'conservative',
-    name: 'Conservative Formation',
-    shortDescription: 'Slower progression, lower price impact, more predictable behaviour.',
+    name: 'Liquidity First',
+    shortDescription: 'Prioritises stronger early liquidity. Lower price sensitivity, deeper curve depth.',
     curveMode: 'buildCurveWithMarketCap',
     initialMcapMultiplier: 0.04,
     migrationMcapMultiplier: 1.0,
@@ -104,13 +104,13 @@ const BASE_TEMPLATES: PlanTemplate[] = [
     segmentCount: 6,
     liquidityProfile: 'concentrated-low',
     graduationProgressEstimate: (m) => Math.min(95, 55 * m),
-    priceBehaviorDescription: 'Gradual price progression with low slippage in early ranges.',
+    priceBehaviorDescription: 'Gradual price progression with low slippage in early price ranges. Price responds slowly to individual trades.',
     feeProfile: 'higher',
   },
   {
     tier: 'balanced',
     name: 'Balanced Formation',
-    shortDescription: 'Balanced price discovery, fee income, and graduation pace.',
+    shortDescription: 'Balances liquidity depth, price discovery, and graduation pace.',
     curveMode: 'buildCurveWithMarketCap',
     initialMcapMultiplier: 0.06,
     migrationMcapMultiplier: 1.0,
@@ -120,13 +120,13 @@ const BASE_TEMPLATES: PlanTemplate[] = [
     segmentCount: 4,
     liquidityProfile: 'distributed',
     graduationProgressEstimate: (m) => Math.min(100, 70 * m),
-    priceBehaviorDescription: 'Moderate price response to demand with reasonable fee friction.',
+    priceBehaviorDescription: 'Moderate price response to demand with reasonable fee friction. Suitable as a general-purpose starting point.',
     feeProfile: 'similar',
   },
   {
     tier: 'aggressive',
-    name: 'Aggressive Formation',
-    shortDescription: 'Faster price discovery and graduation; higher sensitivity to demand.',
+    name: 'Price Discovery First',
+    shortDescription: 'Prioritises faster price discovery and graduation; higher price sensitivity.',
     curveMode: 'buildCurveWithMarketCap',
     initialMcapMultiplier: 0.1,
     migrationMcapMultiplier: 1.0,
@@ -136,7 +136,7 @@ const BASE_TEMPLATES: PlanTemplate[] = [
     segmentCount: 3,
     liquidityProfile: 'top-weighted',
     graduationProgressEstimate: (m) => Math.min(100, 85 * m),
-    priceBehaviorDescription: 'Faster price response; graduation reachable with moderate demand.',
+    priceBehaviorDescription: 'Faster price response to demand; graduation reachable with moderate demand. Higher sensitivity to demand shortfalls.',
     feeProfile: 'lower',
   },
 ];
@@ -261,17 +261,17 @@ function buildRationale(
   const primaryObjective = obj.objectives[0];
 
   if (tier === 'conservative') {
-    return `Prioritises stability over speed. With ${demandWord} expected demand and a focus on ${primaryObjective}, ` +
-      `this plan uses tighter liquidity concentration and ${feeBps}bps base fee to reduce volatility. ` +
+    return `Prioritises deeper early liquidity over speed. With ${demandWord} expected demand and a focus on ${primaryObjective}, ` +
+      `this plan uses tighter liquidity concentration and a ${feeBps}bps base fee to reduce price sensitivity in early ranges. ` +
       `Estimated graduation progress: ${gradPct}% under expected demand.`;
   }
   if (tier === 'aggressive') {
-    return `Optimised for speed. Lower fees (${feeBps}bps) and a steeper curve accelerate graduation. ` +
-      `Best suited to ${demandWord} demand where rapid price discovery aligns with the ${primaryObjective} goal. ` +
-      `Higher sensitivity to demand fluctuations.`;
+    return `Prioritises price discovery speed. Lower fees (${feeBps}bps) and a steeper curve accelerate price response and graduation. ` +
+      `Best suited to ${demandWord} demand where faster price discovery aligns with the ${primaryObjective} goal. ` +
+      `Higher sensitivity to demand shortfalls — less suitable if early demand is uncertain.`;
   }
-  return `Balances price discovery, fee income, and graduation pace. ${feeBps}bps base fee with ` +
-    `dynamic fee enabled responds to demand volatility. Good general-purpose choice for ${primaryObjective} ` +
+  return `Balances liquidity depth, price discovery, and graduation pace. ${feeBps}bps base fee with ` +
+    `dynamic fee enabled responds to demand volatility. A solid starting point for ${primaryObjective} ` +
     `with ${demandWord} expected demand. Estimated ${gradPct}% graduation progress.`;
 }
 
