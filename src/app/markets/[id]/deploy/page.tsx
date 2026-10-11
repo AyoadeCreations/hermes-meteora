@@ -240,9 +240,11 @@ export default function DeployPage() {
 
       const txBytes = Buffer.from(createConfigTxBase64, 'base64');
       const tx      = Transaction.from(txBytes);
-      tx.feePayer   = publicKey;
-      // DO NOT set tx.recentBlockhash — server already set and signed it.
-      // Overwriting invalidates the config keypair partial signature.
+      // DO NOT set tx.feePayer — server already set it to this wallet's address
+      // before partial-signing with the config keypair.
+      // Reassigning feePayer after deserialization reorders the signers array
+      // and clears the config keypair's partial signature.
+      // DO NOT set tx.recentBlockhash — server already set and signed over it.
 
       const signature = await sendTransaction(tx, connection, {
         skipPreflight:       true,   // avoids stale-blockhash simulation errors
