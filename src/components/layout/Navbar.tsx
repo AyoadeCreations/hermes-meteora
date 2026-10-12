@@ -12,19 +12,26 @@ import { ChevronRight, Menu, X, Plus } from 'lucide-react';
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
-// ── Logo — uses the actual /public/logo.svg asset ────────────────────────────
-// Falls back to inline H-mark only if the Image fails to load (should never happen).
+// ── Logo — uses the actual /public/hermes-logo.png asset ─────────────────────
 
 function HermesLogo({ className }: { className?: string }) {
   return (
-    <Image
-      src="/logo.svg"
-      alt="HERMES"
-      width={112}
-      height={28}
-      priority
-      className={className}
-    />
+    <span className={`inline-flex items-center gap-2.5 ${className ?? ''}`}>
+      <Image
+        src="/hermes-logo.png"
+        alt=""
+        width={40}
+        height={40}
+        priority
+        className="h-10 w-10 shrink-0"
+      />
+      <span
+        className="text-text-primary font-semibold text-base tracking-tight leading-none"
+        style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif" }}
+      >
+        HERMES
+      </span>
+    </span>
   );
 }
 
