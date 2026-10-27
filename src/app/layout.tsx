@@ -1,21 +1,14 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
+import '@fontsource/instrument-serif/latin-400.css';
+import '@fontsource/instrument-serif/latin-400-italic.css';
 import { WalletProvider } from '@/components/WalletProvider';
 import './globals.css';
 
-const fontInter = Inter({
-  subsets:  ['latin'],
-  variable: '--font-inter',
-  display:  'swap',
-  weight:   ['400', '500', '600', '700'],
-});
-
-const fontMono = JetBrains_Mono({
-  subsets:  ['latin'],
-  variable: '--font-jetbrains',
-  display:  'swap',
-  weight:   ['400', '500'],
-});
+// Geist (UI + display) and Geist Mono (numbers) ship as npm packages, so builds
+// never depend on Google Fonts being reachable. Instrument Serif supplies the
+// italic accent words.
 
 export const metadata: Metadata = {
   title:       'HERMES — Market Formation for New Onchain Assets',
@@ -40,17 +33,19 @@ export const metadata: Metadata = {
 
 // themeColor must be in viewport export in Next.js 15 (not metadata)
 export const viewport: Viewport = {
-  themeColor: '#020203',
+  themeColor: '#FFFFFF',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${fontInter.variable} ${fontMono.variable}`}
-      style={{ colorScheme: 'dark' }}
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+      style={{ colorScheme: 'light' }}
     >
       <body suppressHydrationWarning>
+        {/* Atmosphere: one soft aurora wash behind every page */}
+        <div className="aurora-wash" aria-hidden="true" />
         <WalletProvider>
           {children}
         </WalletProvider>

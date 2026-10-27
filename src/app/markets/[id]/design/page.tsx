@@ -15,7 +15,7 @@ import { cn } from '@/lib/cn';
 import { RefreshCw, ChevronRight, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { SimulationDisclaimer } from '@/components/ui/SimulationDisclaimer';
 
-const CARD_COLORS = ['#5E6AD2', '#2da44e', '#d97706'] as const;
+const CARD_COLORS = ['#6A3DF0', '#F0368C', '#FF6A3D'] as const;
 
 export default function DesignPage() {
   const { id } = useParams<{ id: string }>();
@@ -140,7 +140,7 @@ export default function DesignPage() {
             <div className="grid grid-cols-3 gap-4">
               {designs.map((d, idx) => (
                 <DesignCard key={d.id} design={d} idx={idx} selected={selected === d.id}
-                  color={CARD_COLORS[idx % CARD_COLORS.length] ?? '#c8a862'}
+                  color={CARD_COLORS[idx % CARD_COLORS.length] ?? '#6A3DF0'}
                   onSelect={() => setSelected(d.id)} />
               ))}
             </div>
@@ -186,7 +186,7 @@ function DesignCard({ design, idx, selected, color, onSelect }: {
     <button type="button" onClick={onSelect} className={cn(
       'text-left p-4 rounded-xl border w-full transition-all duration-150 active:scale-[0.99]',
       selected
-        ? 'border-accent bg-accent-subtle shadow-glow [background-image:linear-gradient(135deg,rgba(94,106,210,0.1)_0%,transparent_100%)]'
+        ? 'border-accent bg-accent-subtle shadow-glow [background-image:linear-gradient(135deg,rgba(106,61,240,0.08)_0%,transparent_100%)]'
         : 'border-border bg-bg-surface hover:border-border-strong hover:bg-bg-elevated'
     )}>
       <div className="flex items-start justify-between mb-2">
@@ -203,7 +203,7 @@ function DesignCard({ design, idx, selected, color, onSelect }: {
       <div className="mb-3">
         <div className="flex justify-between mb-1">
           <span className="text-2xs text-text-tertiary">Objective Score</span>
-          <span className="text-xs mono font-semibold" style={{ color: selected ? color : '#9899A6' }}>{score}</span>
+          <span className="text-xs mono font-semibold" style={{ color: selected ? color : '#85868F' }}>{score}</span>
         </div>
         <div className="h-1 bg-bg-muted rounded-full overflow-hidden">
           <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, design.objectiveScore * 100)}%`, backgroundColor: color }} />

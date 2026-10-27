@@ -53,6 +53,14 @@ const STATUS_LABELS: Record<DeploymentStatus, string> = {
   failed:             'Failed',
 };
 
+// Compact labels for the progress strip so all four steps fit the card width
+const STEP_SHORT: Partial<Record<DeploymentStatus, string>> = {
+  preparing:          'Preparing',
+  awaiting_signature: 'Approve in wallet',
+  submitted:          'Submitted',
+  confirmed:          'Confirmed',
+};
+
 // ── Explorer URLs ────────────────────────────────────────────────────────────
 
 function explorerTxUrl(sig: string) {
@@ -599,7 +607,7 @@ function DeploymentStatusBar({ status }: { status: DeploymentStatus }) {
                     done   ? 'text-success' :
                              'text-text-tertiary'
                   )}>
-                    {STATUS_LABELS[step]}
+                    {STEP_SHORT[step] ?? STATUS_LABELS[step]}
                   </span>
                 </div>
                 {i < steps.length - 1 && (

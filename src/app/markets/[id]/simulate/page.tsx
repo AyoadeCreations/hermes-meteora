@@ -22,7 +22,7 @@ import { Play } from 'lucide-react';
 import { SimulationDisclaimer } from '@/components/ui/SimulationDisclaimer';
 
 const SCENARIOS: TradeScenario[] = ['A', 'B', 'C', 'D'];
-const CHART_COLORS = { A: '#5E6AD2', B: '#2da44e', C: '#d97706', D: '#e5534b' };
+const CHART_COLORS = { A: '#6A3DF0', B: '#F0368C', C: '#FF6A3D', D: '#0B0B10' };
 
 export default function SimulatePage() {
   const { id } = useParams<{ id: string }>();
@@ -100,7 +100,7 @@ export default function SimulatePage() {
     >
       <MarketSubNav marketId={id} />
 
-      <div className="mt-6 grid grid-cols-[280px_1fr] gap-5">
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-5">
         {/* Controls */}
         <div className="space-y-4">
           <Card>
@@ -208,13 +208,13 @@ export default function SimulatePage() {
                 </h4>
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={result.pricePath}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="tradeIndex" tick={{ fill: '#5C5D6E', fontSize: 10 }} />
-                    <YAxis tickFormatter={(v: number) => v.toFixed(6)} tick={{ fill: '#5C5D6E', fontSize: 10 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(12,12,20,0.06)" />
+                    <XAxis dataKey="tradeIndex" tick={{ fill: '#85868F', fontSize: 10 }} />
+                    <YAxis tickFormatter={(v: number) => v.toFixed(6)} tick={{ fill: '#85868F', fontSize: 10 }} />
                     <Tooltip
-                      contentStyle={{ background: '#111116', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10 }}
-                      labelStyle={{ color: '#9899A6', fontSize: 11 }}
-                      itemStyle={{ color: '#EDEDEF', fontSize: 12, fontFamily: 'var(--font-jetbrains)' }}
+                      contentStyle={{ background: 'rgba(255,255,255,0.94)', border: '1px solid rgba(12,12,20,0.09)', borderRadius: 14, boxShadow: '0 16px 40px -12px rgba(12,12,20,0.22)' }}
+                      labelStyle={{ color: '#85868F', fontSize: 11 }}
+                      itemStyle={{ color: '#0B0B10', fontSize: 12, fontFamily: 'var(--font-geist-mono)' }}
                       formatter={(v: number) => [v.toFixed(8), 'Price']}
                     />
                     <Line
@@ -235,15 +235,15 @@ export default function SimulatePage() {
                 </h4>
                 <ResponsiveContainer width="100%" height={180}>
                   <LineChart data={result.quoteAccumulation}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="tradeIndex" tick={{ fill: '#5C5D6E', fontSize: 10 }} />
-                    <YAxis tickFormatter={(v: number) => `${v.toFixed(1)} SOL`} tick={{ fill: '#5C5D6E', fontSize: 10 }} width={70} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(12,12,20,0.06)" />
+                    <XAxis dataKey="tradeIndex" tick={{ fill: '#85868F', fontSize: 10 }} />
+                    <YAxis tickFormatter={(v: number) => `${v.toFixed(1)} SOL`} tick={{ fill: '#85868F', fontSize: 10 }} width={70} />
                     <Tooltip
-                      contentStyle={{ background: '#111116', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10 }}
+                      contentStyle={{ background: 'rgba(255,255,255,0.94)', border: '1px solid rgba(12,12,20,0.09)', borderRadius: 14, boxShadow: '0 16px 40px -12px rgba(12,12,20,0.22)' }}
                       formatter={(v: number) => [`${v.toFixed(4)} SOL`, 'Accumulated']}
                     />
-                    <Line type="monotone" dataKey="quoteAccumulated" stroke="#5E6AD2" dot={false} strokeWidth={2} />
-                    <ReferenceLine y={design?.graduation.quoteThreshold} stroke="#2da44e" strokeDasharray="4 4" label={{ value: 'Graduation', fill: '#2da44e', fontSize: 10 }} />
+                    <Line type="monotone" dataKey="quoteAccumulated" stroke="#6A3DF0" dot={false} strokeWidth={2.5} strokeLinecap="round" />
+                    <ReferenceLine y={design?.graduation.quoteThreshold} stroke="#0C8F5A" strokeDasharray="4 4" label={{ value: 'Graduation', fill: '#0C8F5A', fontSize: 10 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </Card>

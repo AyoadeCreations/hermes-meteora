@@ -17,8 +17,8 @@ import {
 import { ChevronRight } from 'lucide-react';
 import { SimulationDisclaimer } from '@/components/ui/SimulationDisclaimer';
 
-const DESIGN_COLORS  = ['#5E6AD2', '#2da44e', '#d97706'];
-const BASELINE_COLOR = '#5C5D6E';
+const DESIGN_COLORS  = ['#6A3DF0', '#F0368C', '#FF6A3D'];
+const BASELINE_COLOR = '#85868F';
 const DESIGN_LABELS  = ['A', 'B', 'C'];
 
 export default function ComparePage() {
@@ -126,32 +126,32 @@ export default function ComparePage() {
         </div>
 
         {/* Charts row */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
             <h4 className="text-2xs uppercase tracking-widest text-text-tertiary mb-3">
               SIMULATED Price Curves
             </h4>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="trade" tick={{ fill: '#5C5D6E', fontSize: 10 }} />
-                <YAxis tickFormatter={(v: number) => v.toFixed(6)} tick={{ fill: '#5C5D6E', fontSize: 10 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(12,12,20,0.06)" />
+                <XAxis dataKey="trade" tick={{ fill: '#85868F', fontSize: 10 }} />
+                <YAxis tickFormatter={(v: number) => v.toFixed(6)} tick={{ fill: '#85868F', fontSize: 10 }} />
                 <Tooltip
-                  contentStyle={{ background: '#111116', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10 }}
+                  contentStyle={{ background: 'rgba(255,255,255,0.94)', border: '1px solid rgba(12,12,20,0.09)', borderRadius: 14, boxShadow: '0 16px 40px -12px rgba(12,12,20,0.22)' }}
                   formatter={(v: number, name: string) => {
                     if (name === 'baseline') return [v.toFixed(8), 'Baseline'];
                     const idx = parseInt(name.replace('design', ''));
-                    return [v.toFixed(8), `${DESIGN_LABELS[idx]} — ${designs[idx]?.name ?? name}`];
+                    return [v.toFixed(8), `${DESIGN_LABELS[idx]}${designs[idx]?.name ? ` — ${designs[idx]?.name}` : ''}`];
                   }}
                 />
                 <Legend formatter={(value: string) => {
-                  if (value === 'baseline') return <span style={{ color: '#9899A6', fontSize: 11 }}>Baseline</span>;
+                  if (value === 'baseline') return <span style={{ color: '#54555F', fontSize: 11 }}>Baseline</span>;
                   const idx = parseInt(value.replace('design', ''));
-                  return <span style={{ color: '#9899A6', fontSize: 11 }}>{DESIGN_LABELS[idx]} — {designs[idx]?.name}</span>;
+                  return <span style={{ color: '#54555F', fontSize: 11 }}>{DESIGN_LABELS[idx]}{designs[idx]?.name ? ` — ${designs[idx]?.name}` : ''}</span>;
                 }} />
                 {designs.map((_, idx) => (
                   <Line key={idx} type="monotone" dataKey={`design${idx}`}
-                    stroke={DESIGN_COLORS[idx] ?? '#5E6AD2'} dot={false} strokeWidth={2} />
+                    stroke={DESIGN_COLORS[idx] ?? '#6A3DF0'} dot={false} strokeWidth={2.5} strokeLinecap="round" />
                 ))}
                 {baseline && (
                   <Line type="monotone" dataKey="baseline"
@@ -167,25 +167,25 @@ export default function ComparePage() {
             </h4>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={capData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="trade" tick={{ fill: '#5C5D6E', fontSize: 10 }} />
-                <YAxis tickFormatter={(v: number) => `${v.toFixed(0)} SOL`} tick={{ fill: '#5C5D6E', fontSize: 10 }} width={60} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(12,12,20,0.06)" />
+                <XAxis dataKey="trade" tick={{ fill: '#85868F', fontSize: 10 }} />
+                <YAxis tickFormatter={(v: number) => `${v.toFixed(0)} SOL`} tick={{ fill: '#85868F', fontSize: 10 }} width={60} />
                 <Tooltip
-                  contentStyle={{ background: '#111116', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10 }}
+                  contentStyle={{ background: 'rgba(255,255,255,0.94)', border: '1px solid rgba(12,12,20,0.09)', borderRadius: 14, boxShadow: '0 16px 40px -12px rgba(12,12,20,0.22)' }}
                   formatter={(v: number, name: string) => {
                     if (name === 'baseline') return [`${v.toFixed(4)} SOL`, 'Baseline'];
                     const idx = parseInt(name.replace('design', ''));
-                    return [`${v.toFixed(4)} SOL`, `${DESIGN_LABELS[idx]} — ${designs[idx]?.name ?? name}`];
+                    return [`${v.toFixed(4)} SOL`, `${DESIGN_LABELS[idx]}${designs[idx]?.name ? ` — ${designs[idx]?.name}` : ''}`];
                   }}
                 />
                 <Legend formatter={(value: string) => {
-                  if (value === 'baseline') return <span style={{ color: '#9899A6', fontSize: 11 }}>Baseline</span>;
+                  if (value === 'baseline') return <span style={{ color: '#54555F', fontSize: 11 }}>Baseline</span>;
                   const idx = parseInt(value.replace('design', ''));
-                  return <span style={{ color: '#9899A6', fontSize: 11 }}>{DESIGN_LABELS[idx]} — {designs[idx]?.name}</span>;
+                  return <span style={{ color: '#54555F', fontSize: 11 }}>{DESIGN_LABELS[idx]}{designs[idx]?.name ? ` — ${designs[idx]?.name}` : ''}</span>;
                 }} />
                 {designs.map((_, idx) => (
                   <Line key={idx} type="monotone" dataKey={`design${idx}`}
-                    stroke={DESIGN_COLORS[idx] ?? '#5E6AD2'} dot={false} strokeWidth={2} />
+                    stroke={DESIGN_COLORS[idx] ?? '#6A3DF0'} dot={false} strokeWidth={2.5} strokeLinecap="round" />
                 ))}
                 {baseline && (
                   <Line type="monotone" dataKey="baseline"
@@ -198,7 +198,7 @@ export default function ComparePage() {
 
         {/* Comparison table */}
         <Card noPad>
-          <table className="data-table w-full">
+          <div className="overflow-x-auto"><table className="data-table w-full min-w-[640px]">
             <thead>
               <tr>
                 <th className="text-left py-2.5 px-4 text-2xs uppercase tracking-widest text-text-tertiary border-b border-border">
@@ -220,7 +220,7 @@ export default function ComparePage() {
                           : 'text-text-secondary hover:text-text-primary'
                       )}
                     >
-                      {DESIGN_LABELS[i]} — {d.name}
+                      {DESIGN_LABELS[i]}{d.name ? ` — ${d.name}` : ''}
                     </button>
                   </th>
                 ))}
@@ -260,7 +260,7 @@ export default function ComparePage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
           {baseline && (
             <p className="px-4 py-2 text-2xs text-text-tertiary border-t border-border-subtle italic">
               Baseline is shown for reference only. It uses a simple default configuration with no objective optimisation.
@@ -278,14 +278,14 @@ export default function ComparePage() {
             {designs.map((d, idx) => (
               <div key={d.id} className="flex items-center gap-3">
                 <span className="text-xs text-text-secondary w-40 shrink-0 truncate">
-                  {DESIGN_LABELS[idx]} — {d.name}
+                  {DESIGN_LABELS[idx]}{d.name ? ` — ${d.name}` : ''}
                 </span>
                 <div className="flex-1 h-1.5 bg-bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-[width] duration-700 ease-cinema"
                     style={{
                       width: `${d.objectiveScore * 100}%`,
-                      backgroundColor: DESIGN_COLORS[idx] ?? '#c8a862',
+                      backgroundColor: DESIGN_COLORS[idx] ?? '#6A3DF0',
                       transitionDelay: `${idx * 80}ms`,
                     }}
                   />

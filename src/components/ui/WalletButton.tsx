@@ -56,7 +56,7 @@ export function WalletButton() {
 
   if (!mounted) {
     return (
-      <button disabled className="h-7 px-3 rounded-lg border border-border text-2xs text-text-tertiary opacity-40 cursor-not-allowed">
+      <button disabled className="h-9 px-4 rounded-full hairline text-xs text-text-tertiary opacity-40 cursor-not-allowed">
         Connect Wallet
       </button>
     );
@@ -65,7 +65,7 @@ export function WalletButton() {
   if (connected && publicKey) {
     return (
       <div className="flex items-center gap-1.5">
-        <div className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg border border-success/25 bg-success-muted text-2xs font-medium text-success">
+        <div className="flex items-center gap-2 h-9 px-3.5 rounded-full bg-success-muted text-xs font-medium text-success">
           <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse-slow" />
           <span className="font-mono">{shortenAddress(publicKey.toString())}</span>
         </div>
@@ -76,8 +76,7 @@ export function WalletButton() {
             void disconnect();
           }}
           className={cn(
-            'h-7 px-2.5 rounded-lg border text-2xs text-text-tertiary',
-            'border-border',
+            'h-9 px-3.5 rounded-full text-xs text-text-tertiary hairline',
             'transition-[background-color,border-color,color] duration-150',
             'hover:text-danger hover:border-danger/30 hover:bg-danger-muted',
             'active:scale-[0.97]'
@@ -91,7 +90,7 @@ export function WalletButton() {
 
   if (connecting) {
     return (
-      <button disabled className="h-7 px-3 rounded-lg border border-accent/40 bg-accent-subtle text-2xs font-semibold text-accent flex items-center gap-1.5 opacity-80 cursor-wait">
+      <button disabled className="h-9 px-4 rounded-full bg-accent-muted text-xs font-medium text-accent flex items-center gap-1.5 opacity-80 cursor-wait">
         <Loader2 className="w-3 h-3 animate-spin" />
         Connecting…
       </button>
@@ -106,10 +105,9 @@ export function WalletButton() {
           setModalOpen(true);
         }}
         className={cn(
-          'h-7 px-3 rounded-lg text-2xs font-semibold active:scale-[0.97]',
-          'border border-accent/40 bg-accent-subtle text-accent',
-          'transition-[background-color,border-color,color] duration-150',
-          'hover:bg-accent-muted hover:border-accent/60'
+          'h-9 px-4 rounded-full text-sm font-medium active:scale-[0.97] hairline text-text-primary',
+          'transition-[background-color,color] duration-200',
+          'hover:bg-white/80'
         )}
       >
         Connect Wallet
@@ -187,17 +185,17 @@ function WalletModal({ onClose }: { onClose: () => void }) {
     <div
       ref={overlayRef}
       onClick={handleOverlay}
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-md"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-ink/30 backdrop-blur-xl"
     >
       <div className={cn(
-        'relative w-full max-w-sm mx-4 rounded-2xl animate-slide-up',
-        'bg-bg-overlay border border-border shadow-elevated',
-        '[background-image:linear-gradient(180deg,rgba(255,255,255,0.04)_0%,transparent_50%)]'
+        'relative w-full max-w-sm mx-4 rounded-3xl animate-slide-up',
+        'bg-white/90 backdrop-blur-2xl border border-white shadow-[0_40px_96px_-24px_rgba(12,12,20,0.35)]',
+        ''
       )}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-accent-subtle border border-accent/25 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-accent-muted flex items-center justify-center">
               <WalletIcon className="w-3.5 h-3.5 text-accent" />
             </div>
             <h2 className="text-sm font-semibold text-text-primary">

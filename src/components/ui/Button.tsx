@@ -15,33 +15,35 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
+  // Ink pill. The primary action in the whole product.
   primary:
-    'bg-accent text-white font-semibold ' +
-    'hover:bg-accent-hover ' +
-    'active:scale-[0.96] active:brightness-90 ' +
-    'shadow-glow-sm hover:shadow-glow',
+    'bg-ink text-white font-medium ' +
+    'hover:bg-ink-soft hover:shadow-[0_10px_28px_-8px_rgba(11,11,16,0.55)] ' +
+    'active:scale-[0.97]',
+  // Soft paper pill
   secondary:
-    'bg-bg-elevated border border-border text-text-primary ' +
-    'hover:bg-bg-overlay hover:border-border-strong ' +
-    'active:scale-[0.97] active:brightness-90',
+    'bg-bg-muted text-text-primary ' +
+    'hover:bg-[#E7E6E1] ' +
+    'active:scale-[0.97]',
   ghost:
     'bg-transparent text-text-secondary ' +
-    'hover:text-text-primary hover:bg-bg-elevated ' +
+    'hover:text-text-primary hover:bg-bg-muted ' +
     'active:scale-[0.97]',
   danger:
-    'bg-danger-muted border border-danger/40 text-danger ' +
-    'hover:bg-danger hover:text-white hover:border-danger ' +
+    'bg-danger-muted text-danger ' +
+    'hover:bg-danger hover:text-white ' +
     'active:scale-[0.97]',
+  // Hairline pill, straight from the reference
   outline:
-    'bg-transparent border border-border text-text-primary ' +
-    'hover:border-border-strong hover:bg-bg-elevated ' +
+    'bg-transparent text-text-primary hairline ' +
+    'hover:bg-ink hover:text-white hover:shadow-none ' +
     'active:scale-[0.97]',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'h-7  px-2.5 text-xs  gap-1.5 rounded-md',
-  md: 'h-8  px-3.5 text-sm  gap-2   rounded-lg',
-  lg: 'h-10 px-5   text-sm  gap-2   rounded-lg',
+  sm: 'h-8  px-3.5 text-xs  gap-1.5 rounded-full',
+  md: 'h-10 px-5   text-sm  gap-2   rounded-full',
+  lg: 'h-12 px-7   text-base gap-2.5 rounded-full',
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -55,11 +57,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         'inline-flex items-center justify-center font-medium',
         // Transitions — never `all`: only the properties we care about
         'transition-[transform,box-shadow,background-color,border-color,color,opacity]',
-        'duration-150 ease-cinema',
+        'duration-200 ease-cinema',
         // Disabled — no scale, reduced opacity
         'disabled:opacity-40 disabled:cursor-not-allowed disabled:!scale-100 disabled:!brightness-100',
         // Focus ring
-        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent focus-visible:ring-offset-1',
+        'focus-visible:outline-none',
         variantStyles[variant],
         sizeStyles[size],
         className

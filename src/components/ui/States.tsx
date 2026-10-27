@@ -26,7 +26,7 @@ export function Skeleton({ className }: { className?: string }) {
         // Shimmer overlay
         'relative overflow-hidden',
         'after:absolute after:inset-0',
-        'after:bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.04)_50%,transparent_100%)]',
+        'after:bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.7)_50%,transparent_100%)]',
         'after:animate-[shimmer_1.8s_ease-in-out_infinite]',
         className
       )}
@@ -90,14 +90,14 @@ export function EmptyState({
         className
       )}
     >
-      <div className="w-12 h-12 rounded-xl bg-bg-elevated border border-border flex items-center justify-center">
-        <SearchX className="w-5 h-5 text-text-tertiary" />
+      <div className="w-14 h-14 rounded-full glass flex items-center justify-center">
+        <SearchX className="w-5 h-5 text-text-secondary" />
       </div>
       <div>
         {/* Active voice, sentence-case */}
-        <p className="text-sm font-medium text-text-secondary">{title}</p>
+        <p className="text-xl font-semibold text-text-primary" style={{ letterSpacing: '-0.035em' }}>{title}</p>
         {description && (
-          <p className="text-xs text-text-tertiary mt-1 max-w-xs mx-auto leading-relaxed">
+          <p className="text-sm text-text-secondary mt-2 max-w-sm mx-auto leading-relaxed">
             {description}
           </p>
         )}
@@ -129,13 +129,13 @@ export function ErrorState({
         className
       )}
     >
-      <div className="w-12 h-12 rounded-xl bg-danger-muted border border-danger/20 flex items-center justify-center">
+      <div className="w-14 h-14 rounded-full bg-danger-muted flex items-center justify-center">
         <AlertTriangle className="w-5 h-5 text-danger" />
       </div>
       <div>
-        <p className="text-sm font-medium text-text-secondary">{title}</p>
+        <p className="text-xl font-semibold text-text-primary" style={{ letterSpacing: '-0.035em' }}>{title}</p>
         {/* Error detail in mono — makes it scannable */}
-        <p className="text-xs text-text-tertiary mt-1 max-w-sm mx-auto font-mono leading-relaxed">
+        <p className="text-xs text-text-tertiary mt-2 max-w-sm mx-auto font-mono leading-relaxed">
           {message}
         </p>
       </div>
@@ -156,8 +156,8 @@ export function WarningBanner({
   return (
     <div
       className={cn(
-        'flex items-start gap-2.5 px-3.5 py-2.5 rounded-lg',
-        'border border-warning/25 bg-warning-muted text-warning text-xs',
+        'flex items-start gap-2.5 px-4 py-3 rounded-2xl',
+        'bg-warning-muted text-warning text-xs',
         className
       )}
     >
@@ -171,7 +171,7 @@ export function WarningBanner({
 
 export function DemoModeBanner() {
   return (
-    <div className="fixed top-0 inset-x-0 z-50 bg-warning/90 backdrop-blur-sm text-bg-base text-2xs font-semibold text-center py-1 tracking-wide">
+    <div className="fixed top-0 inset-x-0 z-50 bg-ink text-white text-2xs font-medium text-center py-1.5 tracking-wide">
       DEMO MODE — Simulated scenarios only. No live blockchain transactions.
     </div>
   );

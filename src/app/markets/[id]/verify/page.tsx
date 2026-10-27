@@ -133,7 +133,7 @@ export default function VerifyPage() {
         title="Pre-Launch Verification"
       >
         <MarketSubNav marketId={id} />
-        <Card className="p-6 max-w-lg mt-4">
+        <Card className="p-8 max-w-lg mt-4 mx-auto text-center">
           <p className="text-sm text-text-secondary mb-4">
             No plan selected. Choose a formation plan first.
           </p>
@@ -162,7 +162,7 @@ export default function VerifyPage() {
       <MarketSubNav marketId={id} />
 
       <div className="mt-5 space-y-5">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-4xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
           {/* ── Left column: configuration ── */}
           <div className="space-y-4">
@@ -370,7 +370,7 @@ export default function VerifyPage() {
         </div>
 
         {/* Methodology disclosure */}
-        <div className="max-w-4xl">
+        <div>
           <MethodologyDisclosure
             contextNote="The DBC configuration is derived from your objective using deterministic rules. It will be exactly what is submitted to Meteora. The expected behaviour estimates are simulation outputs — they will not match real on-chain results precisely."
           />

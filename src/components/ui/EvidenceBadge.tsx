@@ -59,8 +59,8 @@ const EVIDENCE_CONFIG: Record<EvidenceType, {
   SIMULATED: {
     label:  'Simulated',
     color:  'text-chart-e',
-    bg:     'bg-[rgba(163,113,247,0.08)]',
-    border: 'border-[rgba(163,113,247,0.25)]',
+    bg:     'bg-[rgba(106,61,240,0.07)]',
+    border: 'border-[rgba(106,61,240,0.20)]',
     description: 'Produced by the HERMES simulation model, not real trading.',
   },
   ASSUMPTION: {

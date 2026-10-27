@@ -1,34 +1,31 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { WalletButton } from '@/components/ui/WalletButton';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
-import { ChevronRight, Menu, X, Plus } from 'lucide-react';
+import { ArrowUpRight, ChevronRight, Menu, X } from 'lucide-react';
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+const DOCS_URL = 'https://docs.meteora.ag/dynamic-bonding-curve/dbc-integration/overview';
 
-// ── Logo — uses the actual /public/hermes-logo.png asset ─────────────────────
+// ── Logo ─────────────────────────────────────────────────────────────────────
 
 function HermesLogo({ className }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-2.5 ${className ?? ''}`}>
+    <span className={cn('inline-flex items-center gap-2.5', className)}>
       <Image
         src="/hermes-logo.png"
         alt=""
-        width={40}
-        height={40}
+        width={36}
+        height={36}
         priority
-        className="h-10 w-10 shrink-0"
+        className="h-9 w-9 shrink-0"
       />
-      <span
-        className="text-text-primary font-semibold text-base tracking-tight leading-none"
-        style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif" }}
-      >
+      <span className="text-text-primary font-semibold text-[17px] leading-none" style={{ letterSpacing: '-0.04em' }}>
         HERMES
       </span>
     </span>
@@ -40,84 +37,94 @@ function HermesLogo({ className }: { className?: string }) {
 export function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
     <>
-      <header className={cn(
-        'fixed top-0 left-0 right-0 z-40 h-14',
-        'flex items-center',
-        'bg-bg-base/90 backdrop-blur-xl',
-        'border-b border-border'
-      )}>
-        <div className="w-full max-w-screen-xl mx-auto px-5 flex items-center justify-between gap-6">
-
-          {/* ── Brand ── */}
-          <Link
-            href="/"
-            className="flex items-center gap-0 shrink-0 group"
-            aria-label="HERMES — home"
-          >
-            <HermesLogo className="h-7 w-auto transition-opacity duration-150 group-hover:opacity-90" />
+      <header
+        className={cn(
+          'fixed top-0 left-0 right-0 z-40 h-16 flex items-center',
+          'transition-[background-color,box-shadow,backdrop-filter] duration-300 ease-cinema',
+          scrolled
+            ? 'bg-white/70 backdrop-blur-2xl saturate-150 shadow-[0_1px_0_rgba(12,12,20,0.06)]'
+            : 'bg-transparent'
+        )}
+      >
+        <div className="relative w-full max-w-screen-xl mx-auto px-5 md:px-8 flex items-center justify-between gap-6">
+          {/* Brand */}
+          <Link href="/" className="flex items-center shrink-0 group" aria-label="HERMES — home">
+            <HermesLogo className="transition-opacity duration-200 group-hover:opacity-80" />
             {DEMO_MODE && <Badge variant="warning" className="ml-2">Demo</Badge>}
           </Link>
 
-          {/* ── Desktop nav ── */}
-          <nav className="hidden md:flex items-center gap-0.5 flex-1" aria-label="Primary navigation">
-            <NavLink href="/#how-it-works" label="How It Works" active={false} />
-            <NavLink href="/"             label="Markets"      active={pathname === '/'} />
-            <NavLink href="https://docs.meteora.ag/dynamic-bonding-curve/dbc-integration/overview" label="Docs" active={false} external />
+          {/* Centered link group */}
+          <nav
+            className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-0.5 p-1 rounded-full bg-white/60 backdrop-blur-xl ring-1 ring-inset ring-border-subtle"
+            aria-label="Primary navigation"
+          >
+            <NavLink href="/#how-it-works" label="How it works" active={false} />
+            <NavLink href="/#markets" label="Markets" active={pathname === '/'} />
+            <NavLink href={DOCS_URL} label="Docs" active={false} external />
           </nav>
 
-          {/* ── Right side ── */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* Right */}
+          <div className="hidden md:flex items-center gap-2.5">
             <NetworkIndicator />
             <WalletButton />
-            <Link href="/markets/new">
-              <Button variant="primary" size="sm" icon={<Plus className="w-3.5 h-3.5" />}>
-                Start a Market
-              </Button>
+            <Link
+              href="/markets/new"
+              className={cn(
+                'group inline-flex items-center gap-1.5 h-9 pl-4 pr-3 rounded-full',
+                'bg-ink text-white text-sm font-medium',
+                'transition-[transform,box-shadow] duration-200 ease-cinema',
+                'hover:shadow-[0_10px_28px_-8px_rgba(11,11,16,0.55)] active:scale-[0.97]'
+              )}
+            >
+              Start a market
+              <ArrowUpRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
           </div>
 
-          {/* ── Mobile: wallet + hamburger ── */}
+          {/* Mobile */}
           <div className="flex md:hidden items-center gap-2">
             <WalletButton />
             <button
               type="button"
               onClick={() => setMobileOpen(v => !v)}
-              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
+              className="h-9 w-9 grid place-items-center rounded-full bg-white/70 ring-1 ring-inset ring-border text-text-primary"
               aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
           </div>
         </div>
       </header>
 
-      {/* ── Mobile drawer ── */}
       {mobileOpen && (
         <div className="fixed inset-0 z-30 md:hidden" onClick={() => setMobileOpen(false)}>
+          <div className="absolute inset-0 bg-ink/20 backdrop-blur-sm" />
           <div
-            className={cn(
-              'absolute top-14 left-0 right-0',
-              'bg-bg-base/95 backdrop-blur-xl border-b border-border',
-              'py-3 px-5 space-y-1 animate-slide-up'
-            )}
+            className="absolute top-16 left-3 right-3 glass rounded-2xl p-2 animate-slide-up"
             onClick={e => e.stopPropagation()}
           >
-            <MobileNavLink href="/#how-it-works" label="How It Works"  onClick={() => setMobileOpen(false)} />
-            <MobileNavLink href="/"              label="Markets"       onClick={() => setMobileOpen(false)} />
-            <MobileNavLink href="https://docs.meteora.ag/dynamic-bonding-curve/dbc-integration/overview" label="Docs" onClick={() => setMobileOpen(false)} external />
-            <div className="pt-2 border-t border-border">
-              <Link href="/markets/new" onClick={() => setMobileOpen(false)}>
-                <Button variant="primary" size="md" className="w-full justify-center" icon={<Plus className="w-4 h-4" />}>
-                  Start a Market
-                </Button>
-              </Link>
-            </div>
-            <div className="pt-1">
-              <NetworkIndicator />
-            </div>
+            <MobileNavLink href="/#how-it-works" label="How it works" onClick={() => setMobileOpen(false)} />
+            <MobileNavLink href="/#markets" label="Markets" onClick={() => setMobileOpen(false)} />
+            <MobileNavLink href={DOCS_URL} label="Docs" onClick={() => setMobileOpen(false)} external />
+            <Link
+              href="/markets/new"
+              onClick={() => setMobileOpen(false)}
+              className="mt-2 flex items-center justify-center gap-1.5 h-12 rounded-full bg-ink text-white text-sm font-medium"
+            >
+              Start a market <ArrowUpRight className="w-4 h-4" />
+            </Link>
+            <div className="pt-3 pb-1 flex justify-center"><NetworkIndicator /></div>
           </div>
         </div>
       )}
@@ -125,74 +132,41 @@ export function Navbar() {
   );
 }
 
-// ── Desktop NavLink ──────────────────────────────────────────────────────────
-
 function NavLink({ href, active, label, external }: {
   href: string; active: boolean; label: string; external?: boolean;
 }) {
   const cls = cn(
-    'px-3 py-1.5 rounded-lg text-sm',
-    'transition-[background-color,color] duration-150',
+    'px-4 h-8 inline-flex items-center rounded-full text-sm',
+    'transition-[background-color,color] duration-200',
     active
-      ? 'text-text-primary bg-bg-elevated'
-      : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+      ? 'text-text-primary bg-white shadow-sm'
+      : 'text-text-secondary hover:text-text-primary hover:bg-white/70'
   );
-
-  if (external) {
-    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
-        {label}
-      </a>
-    );
-  }
-
-  return (
-    <Link href={href} className={cls}>
-      {label}
-    </Link>
-  );
+  return external
+    ? <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>{label}</a>
+    : <Link href={href} className={cls}>{label}</Link>;
 }
-
-// ── Mobile NavLink ───────────────────────────────────────────────────────────
 
 function MobileNavLink({ href, label, onClick, external }: {
   href: string; label: string; onClick: () => void; external?: boolean;
 }) {
-  const cls = 'flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors';
-
-  if (external) {
-    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={cls} onClick={onClick}>
-        {label}
-      </a>
-    );
-  }
-
-  return (
-    <Link href={href} className={cls} onClick={onClick}>
-      {label}
-    </Link>
-  );
+  const cls = 'flex items-center justify-between px-4 py-3 rounded-xl text-base text-text-primary hover:bg-white/80 transition-colors';
+  return external
+    ? <a href={href} target="_blank" rel="noopener noreferrer" className={cls} onClick={onClick}>{label}</a>
+    : <Link href={href} className={cls} onClick={onClick}>{label}</Link>;
 }
 
 // ── Network indicator ───────────────────────────────────────────────────────
 
-function NetworkIndicator() {
-  const network   = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? 'devnet';
+export function NetworkIndicator() {
+  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? 'devnet';
   const isMainnet = network === 'mainnet-beta';
-
   return (
-    <div className={cn(
-      'flex items-center gap-1.5 px-2.5 py-1 rounded-lg',
-      'border text-2xs font-medium',
-      isMainnet
-        ? 'border-success/25 bg-success-muted text-success'
-        : 'border-warning/25 bg-warning-muted text-warning'
-    )}>
-      <span className={cn(
-        'w-1.5 h-1.5 rounded-full',
-        isMainnet ? 'bg-success animate-pulse-slow' : 'bg-warning'
-      )} />
+    <div className="flex items-center gap-2 px-3 h-9 rounded-full text-xs font-medium text-text-secondary">
+      <span className="relative flex h-2 w-2">
+        <span className={cn('absolute inline-flex h-full w-full rounded-full opacity-50 animate-ping', isMainnet ? 'bg-success' : 'bg-warning')} />
+        <span className={cn('relative inline-flex h-2 w-2 rounded-full', isMainnet ? 'bg-success' : 'bg-warning')} />
+      </span>
       {isMainnet ? 'Mainnet' : 'Devnet'}
     </div>
   );
@@ -210,47 +184,33 @@ export function PageLayout({ children, breadcrumbs, title, subtitle, actions }: 
   actions?:     React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-bg-base">
+    <div className="min-h-screen">
       <Navbar />
-      <main className="pt-14">
+      <main className="pt-16">
         {(breadcrumbs || title) && (
-          <div className="border-b border-border bg-bg-surface/40 backdrop-blur-sm">
-            <div className="max-w-screen-xl mx-auto px-5 py-2.5 flex items-center justify-between">
-              <div className="flex items-center gap-1.5 min-w-0">
+          <div>
+            <div className="max-w-screen-xl mx-auto px-5 md:px-8 pt-6 flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-1.5 min-w-0 max-w-full">
                 {breadcrumbs?.map((b, i) => (
                   <React.Fragment key={i}>
-                    {i > 0 && (
-                      <ChevronRight className="w-3 h-3 text-text-disabled shrink-0" />
-                    )}
+                    {i > 0 && <ChevronRight className="w-3 h-3 text-text-disabled shrink-0" />}
                     {b.href ? (
-                      <Link
-                        href={b.href}
-                        className="text-xs text-text-tertiary hover:text-text-secondary
-                                   transition-colors duration-100 truncate"
-                      >
+                      <Link href={b.href} className="text-xs text-text-tertiary hover:text-text-primary transition-colors truncate max-w-[9rem] md:max-w-none">
                         {b.label}
                       </Link>
                     ) : (
-                      <span className="text-xs text-text-primary font-medium truncate">
-                        {b.label}
-                      </span>
+                      <span className="text-xs text-text-primary font-medium truncate max-w-[9rem] md:max-w-none">{b.label}</span>
                     )}
                   </React.Fragment>
                 ))}
-                {title && !breadcrumbs && (
-                  <span className="text-sm font-semibold text-text-primary">{title}</span>
-                )}
+                {title && !breadcrumbs && <span className="text-sm font-semibold text-text-primary">{title}</span>}
               </div>
-              {subtitle && (
-                <p className="text-xs text-text-tertiary mt-0.5 truncate max-w-lg">{subtitle}</p>
-              )}
-              {actions && (
-                <div className="flex items-center gap-2 shrink-0 ml-4">{actions}</div>
-              )}
+              {subtitle && <p className="text-xs text-text-tertiary max-w-sm text-left md:text-right leading-snug">{subtitle}</p>}
+              {actions && <div className="flex items-center gap-2 shrink-0 ml-4">{actions}</div>}
             </div>
           </div>
         )}
-        <div className="max-w-screen-xl mx-auto px-5 py-6 animate-fade-in">
+        <div className="max-w-screen-xl mx-auto px-5 md:px-8 py-6 animate-fade-in">
           {children}
         </div>
       </main>
@@ -258,7 +218,7 @@ export function PageLayout({ children, breadcrumbs, title, subtitle, actions }: 
   );
 }
 
-// ── Market sub-nav ──────────────────────────────────────────────────────────
+// ── Market step rail ────────────────────────────────────────────────────────
 
 const MARKET_TABS = [
   { label: 'Objective', href: (id: string) => `/markets/${id}/objective` },
@@ -272,37 +232,63 @@ const MARKET_TABS = [
   { label: 'Analysis',  href: (id: string) => `/markets/${id}/analysis`  },
 ] as const;
 
+const STEP_TITLES: Record<string, [string, string]> = {
+  Objective: ['Define the',   'objective.'],
+  Plans:     ['Choose a',     'plan.'],
+  Verify:    ['Verify the',   'design.'],
+  Design:    ['Compare',      'candidates.'],
+  Simulate:  ['Stress-test the', 'market.'],
+  Compare:   ['Side by',      'side.'],
+  Deploy:    ['Deploy',       'on-chain.'],
+  Monitor:   ['Watch it',     'form.'],
+  Analysis:  ['Designed vs.', 'actual.'],
+};
+
 export function MarketSubNav({ marketId }: { marketId: string }) {
   const pathname = usePathname();
+  const current = MARKET_TABS.find(t =>
+    t.label === 'Monitor' ? pathname === t.href(marketId) : pathname.startsWith(t.href(marketId))
+  );
+  const title = current ? STEP_TITLES[current.label] : undefined;
 
   return (
-    <div className="border-b border-border bg-bg-surface/30">
-      <div className="max-w-screen-xl mx-auto px-5">
-        <nav className="flex -mb-px gap-0">
-          {MARKET_TABS.map((tab) => {
-            const href   = tab.href(marketId);
-            const active = tab.label === 'Monitor'
-              ? pathname === href
-              : pathname.startsWith(href);
-
-            return (
-              <Link
-                key={tab.label}
-                href={href}
+    <>
+    {title && (
+      <h1 className="display display-md text-text-primary mt-2 mb-6 animate-slide-up">
+        {title[0]} <span className="serif-i text-[1.12em]">{title[1]}</span>
+      </h1>
+    )}
+    <div className="mb-8 -mx-1 overflow-x-auto no-scrollbar">
+      <nav className="inline-flex items-center gap-0.5 p-1 rounded-full glass min-w-max">
+        {MARKET_TABS.map((tab, i) => {
+          const href   = tab.href(marketId);
+          const active = tab.label === 'Monitor' ? pathname === href : pathname.startsWith(href);
+          return (
+            <Link
+              key={tab.label}
+              href={href}
+              className={cn(
+                'group inline-flex items-center gap-2 h-9 pl-2.5 pr-4 rounded-full text-sm',
+                'transition-[background-color,color,box-shadow] duration-300 ease-cinema',
+                active
+                  ? 'bg-ink text-white shadow-[0_8px_20px_-8px_rgba(11,11,16,0.6)]'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-white/80'
+              )}
+            >
+              <span
                 className={cn(
-                  'px-4 py-3 text-xs font-medium border-b-2',
-                  'transition-[color,border-color] duration-150',
-                  active
-                    ? 'border-accent text-accent'
-                    : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border-strong'
+                  'font-mono text-[10px] w-5 h-5 grid place-items-center rounded-full tabular-nums',
+                  active ? 'bg-white/15 text-white' : 'bg-bg-muted text-text-tertiary group-hover:text-text-primary'
                 )}
               >
-                {tab.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              {tab.label}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
+    </>
   );
 }

@@ -110,7 +110,7 @@ export function MarketConditionCard({
     <div
       className={cn(
         'rounded-xl border bg-bg-surface',
-        '[background-image:linear-gradient(180deg,rgba(255,255,255,0.025)_0%,transparent_100%)]',
+        '',
         cfg.border,
         className
       )}

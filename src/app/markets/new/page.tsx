@@ -146,8 +146,8 @@ export default function NewMarketPage() {
     >
       <div className="max-w-2xl mx-auto">
         <div className="mb-7">
-          <h1 className="text-3xl font-bold text-text-primary tracking-tight">
-            Create Market Brief
+          <h1 className="display display-lg text-text-primary">
+            Create a <span className="serif-i text-[1.12em]">market brief.</span>
           </h1>
           <p className="text-sm text-text-secondary mt-2 leading-relaxed max-w-lg">
             Define your token parameters and market objective. The engine generates
@@ -319,7 +319,7 @@ export default function NewMarketPage() {
                     // Focus ring
                     'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent',
                     form.objective === obj
-                      ? 'border-accent bg-accent-subtle [background-image:linear-gradient(135deg,rgba(94,106,210,0.12)_0%,transparent_100%)]'
+                      ? 'border-accent bg-accent-subtle [background-image:linear-gradient(135deg,rgba(106,61,240,0.08)_0%,transparent_100%)]'
                       : 'border-border hover:border-border-strong hover:bg-bg-elevated'
                   )}
                 >

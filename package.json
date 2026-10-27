@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@fontsource/instrument-serif": "^5.3.0",
     "@meteora-ag/dynamic-bonding-curve-sdk": "latest",
     "@solana/spl-token": "0.4.14",
     "@solana/wallet-adapter-base": "^0.9.23",
@@ -27,6 +28,7 @@
     "buffer": "6.0.3",
     "clsx": "2.1.1",
     "decimal.js": "10.5.0",
+    "geist": "^1.8.2",
     "lucide-react": "0.513.0",
     "nanoid": "5.1.5",
     "next": "15.3.9",

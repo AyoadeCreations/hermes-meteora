@@ -144,18 +144,18 @@ export default function AnalysisPage() {
             </p>
             <ResponsiveContainer width="100%" height={220}>
               <ComposedChart data={overlayData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" />
-                <XAxis dataKey="index" tick={{ fill: '#60607a', fontSize: 10 }} />
-                <YAxis tickFormatter={(v: number) => v.toFixed(6)} tick={{ fill: '#60607a', fontSize: 10 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(12,12,20,0.06)" />
+                <XAxis dataKey="index" tick={{ fill: '#85868F', fontSize: 10 }} />
+                <YAxis tickFormatter={(v: number) => v.toFixed(6)} tick={{ fill: '#85868F', fontSize: 10 }} />
                 <Tooltip
-                  contentStyle={{ background: '#18181c', border: '1px solid #2a2a35', borderRadius: 6 }}
+                  contentStyle={{ background: 'rgba(255,255,255,0.94)', border: '1px solid rgba(12,12,20,0.09)', borderRadius: 14, boxShadow: '0 16px 40px -12px rgba(12,12,20,0.22)' }}
                   formatter={(v: number, name: string) => [v.toFixed(8), name === 'designed' ? 'Designed' : 'Actual']}
                 />
                 <Legend formatter={(v: string) => (
-                  <span style={{ color: '#a0a0b0', fontSize: 11 }}>{v === 'designed' ? 'Designed (Simulated)' : 'Actual Observed'}</span>
+                  <span style={{ color: '#54555F', fontSize: 11 }}>{v === 'designed' ? 'Designed (Simulated)' : 'Actual Observed'}</span>
                 )} />
-                <Line type="monotone" dataKey="designed" stroke="#c8a862" dot={false} strokeWidth={1.5} strokeDasharray="4 2" />
-                <Line type="monotone" dataKey="actual"   stroke="#e05050" dot={false} strokeWidth={1.5} />
+                <Line type="monotone" dataKey="designed" stroke="#0B0B10" dot={false} strokeWidth={1.5} strokeDasharray="4 3" />
+                <Line type="monotone" dataKey="actual"   stroke="#F0368C" dot={false} strokeWidth={2.5} strokeLinecap="round" />
               </ComposedChart>
             </ResponsiveContainer>
           </Card>

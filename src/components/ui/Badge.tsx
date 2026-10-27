@@ -10,10 +10,10 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const variantStyles: Record<BadgeVariant, string> = {
   default: 'bg-bg-muted    text-text-secondary border border-border-subtle',
-  success: 'bg-success-muted text-success      border border-success/20',
-  warning: 'bg-warning-muted text-warning      border border-warning/20',
-  danger:  'bg-danger-muted  text-danger        border border-danger/20',
-  accent:  'bg-accent-muted  text-accent        border border-accent/25',
+  success: 'bg-success-muted text-success      border border-success/15',
+  warning: 'bg-warning-muted text-warning      border border-warning/15',
+  danger:  'bg-danger-muted  text-danger        border border-danger/15',
+  accent:  'bg-accent-muted  text-accent        border border-accent/15',
   muted:   'bg-bg-elevated   text-text-tertiary border border-border-subtle',
   outline: 'bg-transparent   text-text-secondary border border-border',
 };
@@ -32,8 +32,8 @@ export function Badge({ variant = 'default', dot = false, children, className, .
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md',
-        'text-2xs font-medium uppercase tracking-wide',
+        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full',
+        'text-2xs font-medium uppercase tracking-[0.08em]',
         variantStyles[variant],
         className
       )}

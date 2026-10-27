@@ -19,15 +19,13 @@ export function Card({
   ...props
 }: CardProps) {
   const base = cn(
-    'rounded-xl border',
+    'rounded-xl border backdrop-blur-xl',
     // Surface
     elevated
-      ? 'bg-bg-elevated border-border-strong shadow-elevated'
-      : 'bg-bg-surface border-border shadow-card',
+      ? 'bg-white/90 border-border-strong shadow-elevated'
+      : 'bg-white/75 border-white/80 shadow-card ring-1 ring-inset ring-border-subtle',
     accent && 'border-border-accent shadow-glow',
-    // Top-edge shimmer — layered on top of any bg-image callers supply
-    '[background-image:linear-gradient(180deg,rgba(255,255,255,0.05)_0%,transparent_50%)]',
-    !noPad && 'p-4',
+    !noPad && 'p-5',
     className
   );
 
@@ -39,11 +37,11 @@ export function Card({
           base,
           'w-full text-left',
           // Hover elevates the surface
-          'hover:border-border-strong hover:bg-bg-elevated',
+          'hover:bg-white hover:shadow-elevated hover:-translate-y-0.5',
           // Pressed: slight scale + dim
-          'active:scale-[0.995] active:brightness-95',
-          'transition-[transform,box-shadow,background-color,border-color,filter] duration-150 ease-cinema',
-          'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent focus-visible:ring-offset-1'
+          'active:scale-[0.995]',
+          'transition-[transform,box-shadow,background-color] duration-300 ease-cinema',
+          'focus-visible:outline-none'
         )}
         {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
       >

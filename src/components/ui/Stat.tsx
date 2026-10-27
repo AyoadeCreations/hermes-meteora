@@ -23,14 +23,14 @@ export function Stat({
   return (
     <div className={cn('flex flex-col gap-0.5', className)} {...props}>
       {/* Label — uppercase, widest tracking, tertiary color = hierarchy */}
-      <span className="text-2xs text-text-tertiary uppercase tracking-widest font-medium leading-none mb-1">
+      <span className="text-2xs text-text-tertiary uppercase tracking-[0.12em] font-medium leading-none mb-1.5">
         {label}
       </span>
 
       {/* Value — tabular-nums ensures digits don't jitter on update */}
       <span
         className={cn(
-          'font-semibold tabular-nums font-mono text-text-primary leading-none',
+          'font-medium tabular-nums font-mono text-text-primary leading-none tracking-tight',
           valueSize
         )}
       >
@@ -78,19 +78,20 @@ export function StatGrid({
 }: StatGridProps) {
   const colClass = {
     2: 'grid-cols-2',
-    3: 'grid-cols-3',
-    4: 'grid-cols-4',
-    5: 'grid-cols-5',
+    3: 'grid-cols-1 sm:grid-cols-3',
+    4: 'grid-cols-2 md:grid-cols-4',
+    5: 'grid-cols-2 md:grid-cols-5',
   }[cols];
 
   return (
     <div
       className={cn(
         'grid',
-        // Subtle dividers between columns
-        '[&>*:not(:first-child)]:border-l [&>*:not(:first-child)]:border-border',
-        '[&>*]:px-4',
-        '[&>*:first-child]:pl-0',
+        // Dividers between columns only once the grid is in its wide layout
+        'gap-y-5 md:gap-y-0',
+        'md:[&>*:not(:first-child)]:border-l md:[&>*:not(:first-child)]:border-border',
+        'md:[&>*]:px-5',
+        'md:[&>*:first-child]:pl-0',
         colClass,
         className
       )}

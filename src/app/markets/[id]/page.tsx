@@ -199,25 +199,25 @@ export default function MarketMonitorPage() {
 
         {/* Charts */}
         {observations.length > 1 && (
-          <div className="grid grid-cols-2 gap-4 animate-fade-in">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-in">
             <Card>
               <h4 className="text-2xs uppercase tracking-widest text-text-tertiary mb-3">Price</h4>
               <ResponsiveContainer width="100%" height={180}>
                 <AreaChart data={priceChartData}>
                   <defs>
                     <linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#5E6AD2" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#5E6AD2" stopOpacity={0}   />
+                      <stop offset="5%"  stopColor="#6A3DF0" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#6A3DF0" stopOpacity={0}   />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="time" tick={{ fill: '#5C5D6E', fontSize: 10 }} />
-                  <YAxis tickFormatter={(v: number) => v.toFixed(6)} tick={{ fill: '#5C5D6E', fontSize: 10 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(12,12,20,0.06)" />
+                  <XAxis dataKey="time" tick={{ fill: '#85868F', fontSize: 10 }} minTickGap={48} interval="preserveStartEnd" />
+                  <YAxis tickFormatter={(v: number) => v.toFixed(6)} tick={{ fill: '#85868F', fontSize: 10 }} />
                   <Tooltip
-                    contentStyle={{ background: '#111116', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10 }}
+                    contentStyle={{ background: 'rgba(255,255,255,0.94)', border: '1px solid rgba(12,12,20,0.09)', borderRadius: 14, boxShadow: '0 16px 40px -12px rgba(12,12,20,0.22)' }}
                     formatter={(v: number) => [v.toFixed(8), 'Price']}
                   />
-                  <Area type="monotone" dataKey="price" stroke="#5E6AD2" fill="url(#priceGrad)" strokeWidth={2} dot={false} />
+                  <Area type="monotone" dataKey="price" stroke="#6A3DF0" fill="url(#priceGrad)" strokeWidth={2} dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
             </Card>
@@ -226,12 +226,12 @@ export default function MarketMonitorPage() {
               <h4 className="text-2xs uppercase tracking-widest text-text-tertiary mb-3">Buy / Sell Volume</h4>
               <ResponsiveContainer width="100%" height={180}>
                 <AreaChart data={volumeChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="time" tick={{ fill: '#5C5D6E', fontSize: 10 }} />
-                  <YAxis tick={{ fill: '#5C5D6E', fontSize: 10 }} />
-                  <Tooltip contentStyle={{ background: '#111116', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10 }} />
-                  <Area type="monotone" dataKey="buyVolume"  stroke="#2da44e" fill="rgba(45,164,78,0.12)"  strokeWidth={2} dot={false} />
-                  <Area type="monotone" dataKey="sellVolume" stroke="#e5534b" fill="rgba(229,83,75,0.12)"  strokeWidth={2} dot={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(12,12,20,0.06)" />
+                  <XAxis dataKey="time" tick={{ fill: '#85868F', fontSize: 10 }} minTickGap={48} interval="preserveStartEnd" />
+                  <YAxis tick={{ fill: '#85868F', fontSize: 10 }} />
+                  <Tooltip contentStyle={{ background: 'rgba(255,255,255,0.94)', border: '1px solid rgba(12,12,20,0.09)', borderRadius: 14, boxShadow: '0 16px 40px -12px rgba(12,12,20,0.22)' }} />
+                  <Area type="monotone" dataKey="buyVolume"  stroke="#0C8F5A" fill="rgba(12,143,90,0.10)"  strokeWidth={2} dot={false} />
+                  <Area type="monotone" dataKey="sellVolume" stroke="#D0343A" fill="rgba(208,52,58,0.08)"  strokeWidth={2} dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
             </Card>

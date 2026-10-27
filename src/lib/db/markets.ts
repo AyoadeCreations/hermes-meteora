@@ -150,6 +150,8 @@ function rowToMarketDesign(row: Record<string, unknown>): MarketDesign {
     ...config,
     id:            row['id'] as string,
     objectiveScore: row['objective_score'] as number,
+    name:          (row['name'] as string | null) ?? config.name,
+    description:   (row['description'] as string | null) ?? config.description,
     simulation,
     scoreBreakdown,
     warnings,

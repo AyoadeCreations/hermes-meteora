@@ -160,7 +160,7 @@ export default function ObjectivePage() {
         subtitle="Review your formation intent before generating plans."
       >
         <MarketSubNav marketId={id} />
-        <div className="max-w-2xl space-y-5 mt-4">
+        <div className="max-w-2xl mx-auto space-y-5 mt-4">
           <Card className="p-6 space-y-5">
 
             {/* Quick summary badges */}
@@ -241,7 +241,7 @@ export default function ObjectivePage() {
       subtitle="Describe the market you want to create. HERMES will translate this into candidate DBC configurations."
     >
       <MarketSubNav marketId={id} />
-      <div className="max-w-2xl space-y-8 mt-4">
+      <div className="max-w-2xl mx-auto space-y-8 mt-4">
 
         {/* Asset type */}
         <FormSection
