@@ -197,7 +197,9 @@
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
           mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
 }
-body > *:not(.aurora-wash) { position: relative; z-index: 1; }
+/* Lift page content above the wash, but never touch portaled overlays (modals, toasts, dev tools):
+   forcing position:relative on them silently breaks position:fixed. */
+body > *:not(.aurora-wash):not(.fixed):not([class*='wallet-adapter']):not(nextjs-portal):not(script):not(next-route-announcer) { position: relative; z-index: 1; }
 /* The landing page paints its own, larger aurora; keep the global wash faint there */
 html[data-page='home'] .aurora-wash { opacity: 0.35; }
 
