@@ -1,5 +1,6 @@
 'use client';
 
+import { ShareReportButton } from '@/components/report/ShareReportButton';
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { PageLayout, MarketSubNav } from '@/components/layout/Navbar';
@@ -319,7 +320,8 @@ export default function ComparePage() {
         </Card>
 
         {/* Action */}
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-start sm:justify-end gap-3 pt-2">
+          <ShareReportButton designId={selected ?? designs[0]?.id ?? ''} className="sm:w-56" />
           <Button
             variant="primary"
             size="md"

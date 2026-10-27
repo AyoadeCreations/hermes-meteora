@@ -21,6 +21,7 @@ import {
 import { Play } from 'lucide-react';
 import { SimulationDisclaimer } from '@/components/ui/SimulationDisclaimer';
 import { SniperStressTest } from '@/components/simulation/SniperStressTest';
+import { ShareReportButton } from '@/components/report/ShareReportButton';
 
 const SCENARIOS: TradeScenario[] = ['A', 'B', 'C', 'D'];
 const CHART_COLORS = { A: '#6A3DF0', B: '#F0368C', C: '#FF6A3D', D: '#0B0B10' };
@@ -174,6 +175,8 @@ export default function SimulatePage() {
           <p className="text-2xs text-text-tertiary text-center">
             SIMULATED SCENARIO — Not a market forecast
           </p>
+
+          <ShareReportButton designId={selectedDesign} />
 
           {error && <p className="text-2xs text-danger">{error}</p>}
         </div>
