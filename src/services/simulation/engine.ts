@@ -36,7 +36,7 @@ import type { SimulationParams } from '@/domain/schemas';
 
 // ── Segment state during simulation ───────────────────────────────────────
 
-interface SegmentState {
+export interface SegmentState {
   priceStart:  number;
   priceEnd:    number;
   baseTokens:  number;
@@ -52,7 +52,7 @@ interface SegmentState {
 
 // ── Segment init ───────────────────────────────────────────────────────────
 
-function initSegmentState(seg: CurveSegment): SegmentState {
+export function initSegmentState(seg: CurveSegment): SegmentState {
   const sqrtLow  = Math.sqrt(Math.max(seg.priceStart, 1e-18)); // guard zero
   const sqrtHigh = Math.sqrt(seg.priceEnd);
   const range    = sqrtHigh - sqrtLow;
@@ -83,7 +83,7 @@ function initSegmentState(seg: CurveSegment): SegmentState {
  *   quoteUsed — total quote tokens consumed (always ≤ netQuoteIn)
  *   newPrice  — price after the trade
  */
-function executeBuy(
+export function executeBuy(
   segments:     SegmentState[],
   currentPrice: number,
   netQuoteIn:   number
@@ -147,7 +147,7 @@ function executeBuy(
  * Sell `baseIn` base tokens back into the curve.
  * Price moves down. Walk segments in reverse.
  */
-function executeSell(
+export function executeSell(
   segments:     SegmentState[],
   currentPrice: number,
   baseIn:       number

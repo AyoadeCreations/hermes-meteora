@@ -20,6 +20,7 @@ import {
 } from 'recharts';
 import { Play } from 'lucide-react';
 import { SimulationDisclaimer } from '@/components/ui/SimulationDisclaimer';
+import { SniperStressTest } from '@/components/simulation/SniperStressTest';
 
 const SCENARIOS: TradeScenario[] = ['A', 'B', 'C', 'D'];
 const CHART_COLORS = { A: '#6A3DF0', B: '#F0368C', C: '#FF6A3D', D: '#0B0B10' };
@@ -252,6 +253,14 @@ export default function SimulatePage() {
             <div className="flex items-center justify-center h-64 text-text-tertiary text-sm">
               Configure parameters and run a simulation.
             </div>
+          )}
+
+          {design && (
+            <SniperStressTest
+              design={design}
+              organicCount={parseInt(tradeCount) || 50}
+              organicSizeQuote={parseFloat(tradeSizeSOL) || 1.7}
+            />
           )}
         </div>
       </div>
