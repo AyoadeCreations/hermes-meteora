@@ -126,8 +126,14 @@ export default function NewMarketPage() {
         body:    JSON.stringify(body),
       });
       if (!res.ok) {
-        const data = await res.json() as { error?: string };
-        throw new Error(data.error ?? 'Failed to create market');
+        // The body may not be JSON (a platform timeout returns HTML), so never assume it is.
+        const data = await res.json().catch(() => null) as { error?: string; message?: string; issues?: { path: (string | number)[]; message: string }[] } | null;
+        const detail = data?.issues?.[0]
+          ? `${data.issues[0].path.join('.') || 'input'}: ${data.issues[0].message}`
+          : data?.message;
+        throw new Error(
+          [data?.error ?? `Failed to create market (${res.status})`, detail].filter(Boolean).join('. ')
+        );
       }
       const data = await res.json() as { market: { id: string } };
       router.push(`/markets/${data.market.id}/design`);

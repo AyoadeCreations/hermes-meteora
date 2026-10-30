@@ -24,12 +24,17 @@ import type {
 } from '@/domain/types';
 import type { CreateMarketBriefInput } from '@/domain/schemas';
 
+import { DbNotConfiguredError } from './diagnose';
+
 const USE_POSTGRES = Boolean(process.env.DATABASE_URL);
 
 // ── Dynamic imports keep the unused driver out of the bundle ─────────────────
 // (Next.js tree-shakes unused dynamic imports in serverless builds)
 
 async function getSqlite() {
+  // Vercel's filesystem is read-only. Falling back to SQLite there never works,
+  // so fail with a clear, classifiable error instead of a confusing write error.
+  if (process.env.VERCEL) throw new DbNotConfiguredError();
   const m = await import('./markets');
   return m;
 }

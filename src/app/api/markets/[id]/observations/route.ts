@@ -1,3 +1,4 @@
+import { dbErrorResponse } from '@/lib/db/diagnose';
 import { NextRequest, NextResponse } from 'next/server';
 import { getObservations, saveObservation } from '@/lib/db';
 import { z } from 'zod';
@@ -11,11 +12,7 @@ export async function GET(
     const observations = await getObservations(id, 500);
     return NextResponse.json({ observations });
   } catch (err) {
-    console.error('[GET /api/markets/:id/observations]', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch observations', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to fetch observations', 'GET /api/markets/:id/observations');
   }
 }
 
@@ -48,10 +45,6 @@ export async function POST(
     });
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (err) {
-    console.error('[POST /api/markets/:id/observations]', err);
-    return NextResponse.json(
-      { error: 'Failed to save observation', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to save observation', 'POST /api/markets/:id/observations');
   }
 }

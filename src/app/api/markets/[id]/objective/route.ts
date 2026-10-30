@@ -1,3 +1,4 @@
+import { dbErrorResponse } from '@/lib/db/diagnose';
 import { NextRequest, NextResponse } from 'next/server';
 import { getObjective, saveObjective, getMarket } from '@/lib/db';
 import { MarketObjectiveInputSchema } from '@/domain/market-objective';
@@ -11,11 +12,7 @@ export async function GET(
     const objective = await getObjective(id);
     return NextResponse.json({ objective });
   } catch (err) {
-    console.error('[GET /api/markets/:id/objective]', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch objective', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to fetch objective', 'GET /api/markets/:id/objective');
   }
 }
 
@@ -44,10 +41,6 @@ export async function POST(
     const saved = await getObjective(id);
     return NextResponse.json({ objective: saved }, { status: 201 });
   } catch (err) {
-    console.error('[POST /api/markets/:id/objective]', err);
-    return NextResponse.json(
-      { error: 'Failed to save objective', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to save objective', 'POST /api/markets/:id/objective');
   }
 }

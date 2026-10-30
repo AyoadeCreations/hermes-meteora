@@ -1,3 +1,4 @@
+import { dbErrorResponse } from '@/lib/db/diagnose';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import {
@@ -68,11 +69,7 @@ export async function POST(
     });
     return NextResponse.json({ deployment }, { status: 201 });
   } catch (err) {
-    console.error('[POST /api/markets/:id/deploy]', err);
-    return NextResponse.json(
-      { error: 'Failed to initiate deployment', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to initiate deployment', 'POST /api/markets/:id/deploy');
   }
 }
 
@@ -85,11 +82,7 @@ export async function GET(
     const deployment = await getDeploymentByMarket(id);
     return NextResponse.json({ deployment });
   } catch (err) {
-    console.error('[GET /api/markets/:id/deploy]', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch deployment', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to fetch deployment', 'GET /api/markets/:id/deploy');
   }
 }
 
@@ -127,10 +120,6 @@ export async function PATCH(
     const updated = await getDeployment(parsed.data.deploymentId);
     return NextResponse.json({ deployment: updated });
   } catch (err) {
-    console.error('[PATCH /api/markets/:id/deploy]', err);
-    return NextResponse.json(
-      { error: 'Failed to update deployment', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to update deployment', 'PATCH /api/markets/:id/deploy');
   }
 }

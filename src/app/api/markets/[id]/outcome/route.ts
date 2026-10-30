@@ -1,3 +1,4 @@
+import { dbErrorResponse } from '@/lib/db/diagnose';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { saveLaunchOutcome, getLaunchOutcome, getMarket } from '@/lib/db';
@@ -38,11 +39,7 @@ export async function POST(
     await saveLaunchOutcome({ marketId: id, ...parsed.data });
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (err) {
-    console.error('[POST /api/markets/:id/outcome]', err);
-    return NextResponse.json(
-      { error: 'Failed to record outcome', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to record outcome', 'POST /api/markets/:id/outcome');
   }
 }
 
@@ -55,10 +52,6 @@ export async function GET(
     const outcome = await getLaunchOutcome(id);
     return NextResponse.json({ outcome });
   } catch (err) {
-    console.error('[GET /api/markets/:id/outcome]', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch outcome', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to fetch outcome', 'GET /api/markets/:id/outcome');
   }
 }

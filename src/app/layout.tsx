@@ -13,10 +13,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title:       'HERMES — Market Formation for New Onchain Assets',
   description: 'HERMES helps token creators and launch teams design, simulate, and validate market formation strategies before deploying on Meteora.',
-  icons: {
-    icon:     '/favicon.svg',
-    shortcut: '/favicon.svg',
-  },
+  // Tab icons come from src/app/icon.png, apple-icon.png and favicon.ico (the HERMES logo).
   openGraph: {
     title:       'HERMES — Market Formation for New Onchain Assets',
     description: 'Design, simulate, and validate your market formation strategy before deploying real capital on Meteora.',

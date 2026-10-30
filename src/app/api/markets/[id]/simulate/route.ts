@@ -1,3 +1,4 @@
+import { dbErrorResponse } from '@/lib/db/diagnose';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDesign, getMarket } from '@/lib/db';
 import { runSimulation } from '@/services/simulation/engine';
@@ -46,10 +47,6 @@ export async function POST(
 
     return NextResponse.json({ result });
   } catch (err) {
-    console.error('[POST /api/markets/:id/simulate]', err);
-    return NextResponse.json(
-      { error: 'Simulation failed', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Simulation failed', 'POST /api/markets/:id/simulate');
   }
 }

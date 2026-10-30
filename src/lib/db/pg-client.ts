@@ -12,6 +12,11 @@ import { SCHEMA_SQL_PG } from './schema-pg';
 
 let _pool: Pool | null = null;
 let _initialized = false;
+/** In flight schema setup, shared by concurrent callers so they never race. */
+let _initPromise: Promise<void> | null = null;
+
+/** Arbitrary constant: all instances take the same lock while creating tables. */
+const SCHEMA_LOCK_KEY = 727_274_001;
 
 export function getPgPool(): Pool {
   if (!_pool) {
@@ -27,7 +32,8 @@ export function getPgPool(): Pool {
       // Vercel serverless: keep pool small — functions spin up/down frequently
       max: 3,
       idleTimeoutMillis: 10_000,
-      connectionTimeoutMillis: 5_000,
+      // Serverless Postgres (Neon) can take several seconds to wake from idle
+      connectionTimeoutMillis: 15_000,
       ssl: connectionString.includes('localhost')
         ? false
         : { rejectUnauthorized: false },
@@ -42,17 +48,43 @@ export function getPgPool(): Pool {
 
 /**
  * Ensure schema tables exist.
- * Idempotent — uses CREATE TABLE IF NOT EXISTS everywhere.
- * Called once per cold start.
+ * Idempotent, and safe under concurrency: simultaneous cold starts used to race
+ * inside CREATE TABLE IF NOT EXISTS and fail with a duplicate key error on
+ * pg_type. Concurrent callers in one instance now share a single promise, and
+ * different instances serialize on a transaction scoped advisory lock (which,
+ * unlike a session lock, is safe behind a transaction pooler).
+ * A failure is not cached, so the next request retries.
  */
 export async function ensurePgSchema(): Promise<void> {
   if (_initialized) return;
-  const pool = getPgPool();
-  const client = await pool.connect();
+  if (_initPromise) return _initPromise;
+
+  _initPromise = (async () => {
+    const pool = getPgPool();
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock($1)', [SCHEMA_LOCK_KEY]);
+      await client.query(SCHEMA_SQL_PG);
+      await client.query('COMMIT');
+      _initialized = true;
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+  })();
+
   try {
-    await client.query(SCHEMA_SQL_PG);
-    _initialized = true;
+    await _initPromise;
   } finally {
-    client.release();
+    _initPromise = null;
   }
+}
+
+/** Lightweight connectivity probe used by the health endpoint. */
+export async function pingPg(): Promise<void> {
+  const pool = getPgPool();
+  await pool.query('SELECT 1');
 }

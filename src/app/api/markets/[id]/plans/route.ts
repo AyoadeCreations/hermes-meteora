@@ -1,3 +1,4 @@
+import { dbErrorResponse } from '@/lib/db/diagnose';
 import { NextRequest, NextResponse } from 'next/server';
 import { getMarket, getObjective, getDesigns } from '@/lib/db';
 import { generateFormationPlans } from '@/services/formation/planner';
@@ -69,10 +70,6 @@ export async function GET(
       objective,
     });
   } catch (err) {
-    console.error('[GET /api/markets/:id/plans]', err);
-    return NextResponse.json(
-      { error: 'Failed to generate plans', message: 'Plan generation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to generate plans', 'GET /api/markets/:id/plans');
   }
 }

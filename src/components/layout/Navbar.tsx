@@ -124,7 +124,7 @@ export function Navbar() {
             >
               Start a market <ArrowUpRight className="w-4 h-4" />
             </Link>
-            <div className="pt-3 pb-1 flex justify-center"><NetworkIndicator /></div>
+            {pathname !== '/' && <div className="pt-3 pb-1 flex justify-center"><NetworkIndicator /></div>}
           </div>
         </div>
       )}
@@ -159,6 +159,10 @@ function MobileNavLink({ href, label, onClick, external }: {
 // ── Network indicator ───────────────────────────────────────────────────────
 
 export function NetworkIndicator() {
+  // The landing page is marketing, not a place to transact: no network pill there.
+  // Everywhere else it stays, because users should always know which network they are on.
+  const pathname = usePathname();
+  if (pathname === '/') return null;
   const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? 'devnet';
   const isMainnet = network === 'mainnet-beta';
   return (

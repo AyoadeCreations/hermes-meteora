@@ -1,3 +1,4 @@
+import { dbErrorResponse } from '@/lib/db/diagnose';
 import { NextRequest, NextResponse } from 'next/server';
 import { getMarket } from '@/lib/db';
 
@@ -13,10 +14,6 @@ export async function GET(
     }
     return NextResponse.json({ market });
   } catch (err) {
-    console.error('[GET /api/markets/:id]', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch market', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to fetch market', 'GET /api/markets/:id');
   }
 }

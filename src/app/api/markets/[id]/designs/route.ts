@@ -1,3 +1,4 @@
+import { dbErrorResponse } from '@/lib/db/diagnose';
 import { NextRequest, NextResponse } from 'next/server';
 import { getMarket, saveDesigns, getDesigns } from '@/lib/db';
 import { generateCandidates } from '@/services/simulation/generator';
@@ -34,11 +35,7 @@ export async function POST(
       violations: result.violations,
     });
   } catch (err) {
-    console.error('[POST /api/markets/:id/designs]', err);
-    return NextResponse.json(
-      { error: 'Failed to generate designs', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to generate designs', 'POST /api/markets/:id/designs');
   }
 }
 
@@ -56,10 +53,6 @@ export async function GET(
 
     return NextResponse.json({ designs, baseline });
   } catch (err) {
-    console.error('[GET /api/markets/:id/designs]', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch designs', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to fetch designs', 'GET /api/markets/:id/designs');
   }
 }

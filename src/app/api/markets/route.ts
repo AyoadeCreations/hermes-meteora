@@ -1,3 +1,4 @@
+import { dbErrorResponse } from '@/lib/db/diagnose';
 import { NextRequest, NextResponse } from 'next/server';
 import { CreateMarketBriefSchema } from '@/domain/schemas';
 import { createMarket, listMarkets } from '@/lib/db';
@@ -16,11 +17,7 @@ export async function POST(req: NextRequest) {
     const market = await createMarket(parsed.data);
     return NextResponse.json({ market }, { status: 201 });
   } catch (err) {
-    console.error('[POST /api/markets]', err);
-    return NextResponse.json(
-      { error: 'Failed to create market', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to create market', 'POST /api/markets');
   }
 }
 
@@ -29,10 +26,6 @@ export async function GET() {
     const markets = await listMarkets();
     return NextResponse.json({ markets });
   } catch (err) {
-    console.error('[GET /api/markets]', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch markets', message: 'Database operation failed' },
-      { status: 500 }
-    );
+    return dbErrorResponse(err, 'Failed to fetch markets', 'GET /api/markets');
   }
 }
