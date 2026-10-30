@@ -121,6 +121,40 @@ export function saveDesigns(designs: MarketDesign[]): void {
   insert(designs);
 }
 
+/**
+ * Save designs only if the market has none yet. Runs in one transaction, so a
+ * second caller sees the first caller's rows. Returns true if it saved.
+ */
+export function saveDesignsIfNone(marketId: string, designs: MarketDesign[]): boolean {
+  const db = getDb();
+  const run = db.transaction(() => {
+    const row = db
+      .prepare('SELECT COUNT(*) AS n FROM market_designs WHERE market_id = ?')
+      .get(marketId) as { n: number };
+    if (row.n > 0) return false;
+    saveDesigns(designs);
+    return true;
+  });
+  return run();
+}
+
+/**
+ * Replace a market's designs. Designs a deployment points at are kept, since
+ * they are what was actually deployed.
+ */
+export function replaceDesigns(marketId: string, designs: MarketDesign[]): void {
+  const db = getDb();
+  const run = db.transaction(() => {
+    db.prepare(
+      `DELETE FROM market_designs
+        WHERE market_id = ?
+          AND id NOT IN (SELECT design_id FROM deployments WHERE market_id = ?)`
+    ).run(marketId, marketId);
+    saveDesigns(designs);
+  });
+  run();
+}
+
 export function getDesigns(marketId: string): MarketDesign[] {
   const db = getDb();
   const rows = db

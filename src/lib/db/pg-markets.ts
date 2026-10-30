@@ -13,6 +13,7 @@
  * - COALESCE used same way for optional fields
  */
 import { nanoid } from 'nanoid';
+import type { PoolClient } from 'pg';
 import { getPgPool, ensurePgSchema } from './pg-client';
 import type {
   MarketBrief,
@@ -108,43 +109,101 @@ function rowToMarketBrief(row: Record<string, unknown>): MarketBrief {
 
 // ── Market Designs ────────────────────────────────────────────────────────────
 
+async function insertDesigns(client: PoolClient, designs: MarketDesign[]): Promise<void> {
+  for (const d of designs) {
+    const { simulation, scoreBreakdown, warnings, ...config } = d;
+    await client.query(
+      `INSERT INTO market_designs (
+         id, market_id, name, description, configuration,
+         simulation_result, objective_score, score_breakdown, warnings, created_at
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+       ON CONFLICT (id) DO UPDATE SET
+         name             = EXCLUDED.name,
+         description      = EXCLUDED.description,
+         configuration    = EXCLUDED.configuration,
+         simulation_result= EXCLUDED.simulation_result,
+         objective_score  = EXCLUDED.objective_score,
+         score_breakdown  = EXCLUDED.score_breakdown,
+         warnings         = EXCLUDED.warnings`,
+      [
+        d.id,
+        d.marketBriefId,
+        d.name,
+        d.description,
+        JSON.stringify(config),
+        JSON.stringify(simulation),
+        d.objectiveScore,
+        JSON.stringify(scoreBreakdown),
+        JSON.stringify(warnings),
+        d.createdAt,
+      ]
+    );
+  }
+}
+
 export async function saveDesigns(designs: MarketDesign[]): Promise<void> {
   const pool = await db();
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    for (const d of designs) {
-      const { simulation, scoreBreakdown, warnings, ...config } = d;
-      await client.query(
-        `INSERT INTO market_designs (
-           id, market_id, name, description, configuration,
-           simulation_result, objective_score, score_breakdown, warnings, created_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-         ON CONFLICT (id) DO UPDATE SET
-           name             = EXCLUDED.name,
-           description      = EXCLUDED.description,
-           configuration    = EXCLUDED.configuration,
-           simulation_result= EXCLUDED.simulation_result,
-           objective_score  = EXCLUDED.objective_score,
-           score_breakdown  = EXCLUDED.score_breakdown,
-           warnings         = EXCLUDED.warnings`,
-        [
-          d.id,
-          d.marketBriefId,
-          d.name,
-          d.description,
-          JSON.stringify(config),
-          JSON.stringify(simulation),
-          d.objectiveScore,
-          JSON.stringify(scoreBreakdown),
-          JSON.stringify(warnings),
-          d.createdAt,
-        ]
-      );
-    }
+    await insertDesigns(client, designs);
     await client.query('COMMIT');
   } catch (err) {
-    await client.query('ROLLBACK');
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Save designs only if the market has none yet. The check and the insert happen
+ * under one per-market advisory lock, so two simultaneous requests (a double
+ * fired effect, a refresh) can never both insert. Returns true if it saved.
+ */
+export async function saveDesignsIfNone(marketId: string, designs: MarketDesign[]): Promise<boolean> {
+  const pool = await db();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`designs:${marketId}`]);
+    const { rows } = await client.query('SELECT 1 FROM market_designs WHERE market_id = $1 LIMIT 1', [marketId]);
+    if (rows.length > 0) {
+      await client.query('COMMIT');
+      return false;
+    }
+    await insertDesigns(client, designs);
+    await client.query('COMMIT');
+    return true;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Replace a market's designs with a fresh set. Designs a deployment points at
+ * are kept: they are what was actually deployed, and deleting them would break
+ * the deployment record.
+ */
+export async function replaceDesigns(marketId: string, designs: MarketDesign[]): Promise<void> {
+  const pool = await db();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`designs:${marketId}`]);
+    await client.query(
+      `DELETE FROM market_designs
+        WHERE market_id = $1
+          AND id NOT IN (SELECT design_id FROM deployments WHERE market_id = $1)`,
+      [marketId]
+    );
+    await insertDesigns(client, designs);
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
     throw err;
   } finally {
     client.release();

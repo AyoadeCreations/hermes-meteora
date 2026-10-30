@@ -83,6 +83,20 @@ export async function saveDesigns(designs: MarketDesign[]): Promise<void> {
   return Promise.resolve((await getSqlite()).saveDesigns(designs));
 }
 
+export async function saveDesignsIfNone(marketId: string, designs: MarketDesign[]): Promise<boolean> {
+  if (USE_POSTGRES) {
+    return (await getPg()).saveDesignsIfNone(marketId, designs);
+  }
+  return Promise.resolve((await getSqlite()).saveDesignsIfNone(marketId, designs));
+}
+
+export async function replaceDesigns(marketId: string, designs: MarketDesign[]): Promise<void> {
+  if (USE_POSTGRES) {
+    return (await getPg()).replaceDesigns(marketId, designs);
+  }
+  return Promise.resolve((await getSqlite()).replaceDesigns(marketId, designs));
+}
+
 export async function getDesigns(marketId: string): Promise<MarketDesign[]> {
   if (USE_POSTGRES) {
     return (await getPg()).getDesigns(marketId);

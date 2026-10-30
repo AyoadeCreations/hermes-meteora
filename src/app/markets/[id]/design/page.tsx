@@ -61,12 +61,12 @@ export default function DesignPage() {
     }
   }
 
-  async function generate() {
+  async function generate(regenerate = false) {
     setGenerating(true);
     setLoading(false); // hand off: generate is now driving the UI state
     setError(null);
     try {
-      const res  = await fetch(`/api/markets/${id}/designs`, { method: 'POST' });
+      const res  = await fetch(`/api/markets/${id}/designs${regenerate ? '?regenerate=1' : ''}`, { method: 'POST' });
       const data = await res.json() as {
         designs?: MarketDesign[];
         baseline?: MarketDesign;
@@ -99,7 +99,7 @@ export default function DesignPage() {
         { label: 'Design' },
       ]}
       actions={
-        <Button variant="ghost" size="sm" loading={generating} onClick={generate}
+        <Button variant="ghost" size="sm" loading={generating} onClick={() => void generate(true)} title="Replace these designs with a fresh set. Report links for replaced designs stop working."
           icon={<RefreshCw className="w-3.5 h-3.5" />}>
           Regenerate
         </Button>
