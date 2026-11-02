@@ -15,6 +15,7 @@
 
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import type { MarketDesign, MarketBrief, SolanaNetwork, Deployment } from '@/domain/types';
+import { LIQUIDITY_DISTRIBUTION, resolveQuoteDecimals } from './config';
 
 // ── Network config ─────────────────────────────────────────────────────────
 
@@ -79,7 +80,7 @@ function mapDesignToConfigParams(
     token: {
       tokenType:          0, // SPLToken
       tokenBaseDecimal:   6, // will be set per market
-      tokenQuoteDecimal:  9, // SOL = 9 decimals
+      tokenQuoteDecimal:  9, // informational only; real build resolves from the mint
       totalTokenSupply:   market.totalSupply,
       leftover:           0,
       tokenAuthorityOption: 0, // CreatorUpdateAuthority
@@ -102,12 +103,7 @@ function mapDesignToConfigParams(
       migrationOption:    1, // MET_DAMM_V2 (required for new configs)
       migrationFeeOption: 0, // FixedBps25
     },
-    liquidityDistribution: {
-      partnerLiquidityPercentage:              0,
-      creatorLiquidityPercentage:              100,
-      partnerPermanentLockedLiquidityPercentage: 0,
-      creatorPermanentLockedLiquidityPercentage: 10, // 10% locked
-    },
+    liquidityDistribution: { ...LIQUIDITY_DISTRIBUTION },
     lockedVesting: {
       totalLockedVestingAmount:     0,
       numberOfVestingPeriod:        0,
@@ -166,7 +162,7 @@ export async function buildDeployTransaction(
     token: {
       tokenType:            TokenType.SPLToken,
       tokenBaseDecimal:     6,
-      tokenQuoteDecimal:    9,
+      tokenQuoteDecimal:    await resolveQuoteDecimals(connection, market.quoteMint),
       totalTokenSupply:     market.totalSupply,
       leftover:             0,
       tokenAuthorityOption: 0,
@@ -192,12 +188,7 @@ export async function buildDeployTransaction(
       migrationFeeOption: MigrationFeeOption.FixedBps25,
       migrationFee:       { feePercentage: 0, creatorFeePercentage: 0 },
     },
-    liquidityDistribution: {
-      partnerLiquidityPercentage:               0,
-      creatorLiquidityPercentage:               100,
-      partnerPermanentLockedLiquidityPercentage: 0,
-      creatorPermanentLockedLiquidityPercentage: 10,
-    },
+    liquidityDistribution: { ...LIQUIDITY_DISTRIBUTION },
     lockedVesting: {
       totalLockedVestingAmount:       0,
       numberOfVestingPeriod:          0,

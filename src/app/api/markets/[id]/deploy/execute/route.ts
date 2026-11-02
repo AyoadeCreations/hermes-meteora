@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getDeployment, getDesign, getMarket } from '@/lib/db';
 import type { MarketBrief, MarketDesign, SolanaNetwork } from '@/domain/types';
+import { LIQUIDITY_DISTRIBUTION, resolveQuoteDecimals } from '@/services/meteora/config';
 
 // NOTE: No static imports from @solana/web3.js or @meteora-ag/dynamic-bonding-curve-sdk.
 // All usage is via dynamic import() inside buildWithSdk to prevent webpack from
@@ -176,19 +177,15 @@ async function buildWithSdk(params: {
 
   const client = DynamicBondingCurveClient.create(connection, 'confirmed');
 
-  // ── LP allocation (must sum to 100) ──────────────────────────────────────
-  const lpAlloc = {
-    partnerLiquidityPercentage: 0,
-    partnerPermanentLockedLiquidityPercentage: 0,
-    creatorLiquidityPercentage: 90,
-    creatorPermanentLockedLiquidityPercentage: 10,
-  };
+  // LP allocation lives in one place: services/meteora/config.ts (sums to 100).
+  const lpAlloc = LIQUIDITY_DISTRIBUTION;
+  const quoteDecimals = await resolveQuoteDecimals(connection, market.quoteMint);
 
   const builtCurve = buildCurveWithMarketCap({
     token: {
       tokenType: TokenType.SPLToken,
       tokenBaseDecimal: 6,
-      tokenQuoteDecimal: 9,
+      tokenQuoteDecimal: quoteDecimals,
       totalTokenSupply: market.totalSupply,
       leftover: 0,
       tokenAuthorityOption: 0,

@@ -285,10 +285,63 @@ export default function DeployPage() {
         throw new Error(`Transaction rejected on-chain: ${errDetail}`);
       }
 
-      // ── Step 5: Save confirmed state ───────────────────────────────────
-      await patchDeployment(dep.id, 'confirmed', {
+      // ── Step 5: Config is on-chain. Save it, then create the pool. ─────
+      await patchDeployment(dep.id, 'submitted', {
         signature,
         configAddress: configAddress ?? '',
+      });
+
+      setStatusMsg('Config confirmed. Preparing the token and pool…');
+      const poolBh = await connection.getLatestBlockhash('confirmed');
+      const poolRes = await fetch(`/api/markets/${id}/deploy/pool`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deploymentId:    dep.id,
+          walletAddress:   publicKey.toString(),
+          configAddress:   configAddress ?? '',
+          network:         NETWORK,
+          clientBlockhash: poolBh.blockhash,
+        }),
+      });
+      const poolData = await poolRes.json() as {
+        createPoolTxBase64?: string;
+        poolAddress?: string;
+        blockhash?: string;
+        lastValidBlockHeight?: number;
+        error?: string;
+      };
+      if (!poolRes.ok || !poolData.createPoolTxBase64 || !poolData.poolAddress) {
+        throw new Error(poolData.error ?? 'Server failed to build the pool transaction.');
+      }
+
+      setStatusMsg('Approve the second transaction to create the token and pool…');
+      // Same rule as the config transaction: do not touch feePayer or recentBlockhash.
+      const poolTx = Transaction.from(Buffer.from(poolData.createPoolTxBase64, 'base64'));
+      const poolSignature = await sendTransaction(poolTx, connection, {
+        skipPreflight:       false,
+        preflightCommitment: 'confirmed',
+        maxRetries:          3,
+      });
+
+      setStatusMsg('Pool transaction submitted. Confirming on-chain…');
+      const poolConfirm = await connection.confirmTransaction(
+        {
+          signature:            poolSignature,
+          blockhash:            poolData.blockhash ?? poolBh.blockhash,
+          lastValidBlockHeight: poolData.lastValidBlockHeight ?? poolBh.lastValidBlockHeight,
+        },
+        'confirmed',
+      );
+      if (poolConfirm.value.err) {
+        throw new Error(`Pool transaction rejected on-chain: ${JSON.stringify(poolConfirm.value.err)}`);
+      }
+
+      const poolAddress = poolData.poolAddress;
+      await patchDeployment(dep.id, 'confirmed', {
+        signature:     poolSignature,
+        configAddress: configAddress ?? '',
+        poolAddress,
       });
 
       track('deployment_confirmed', {
@@ -311,8 +364,8 @@ export default function DeployPage() {
             selectedPlanId:         planParam ?? null,
             selectedPlanName:       null,
             selectedDesignId:       design?.id ?? '',
-            transactionSignature:   signature,
-            poolAddress:            null,
+            transactionSignature:   poolSignature,
+            poolAddress,
             configAddress:          configAddress ?? null,
             launchTimestamp:        new Date().toISOString(),
             configurationSnapshot:  JSON.stringify(design ?? {}),
