@@ -15,12 +15,10 @@ import {
 } from 'recharts';
 import { ExternalLink, RefreshCw } from 'lucide-react';
 import { MarketConditionCard } from '@/components/ui/MarketConditionCard';
+import { explorerUrl } from '@/lib/explorer';
 import { deriveMarketCondition } from '@/services/market-condition/deriveMarketCondition';
 
 const NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? 'devnet';
-const EXPLORER_BASE = NETWORK === 'mainnet-beta'
-  ? 'https://solscan.io'
-  : 'https://solscan.io/?cluster=devnet';
 
 export default function MarketMonitorPage() {
   const { id } = useParams<{ id: string }>();
@@ -124,7 +122,7 @@ export default function MarketMonitorPage() {
               )}
               {deployment?.poolAddress && (
                 <a
-                  href={`${EXPLORER_BASE}/account/${deployment.poolAddress}`}
+                  href={explorerUrl('account', deployment.poolAddress, NETWORK)}
                   target="_blank"
                   rel="noreferrer"
                   className={cn(
