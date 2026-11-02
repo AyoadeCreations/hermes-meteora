@@ -10,7 +10,6 @@ import { cn } from '@/lib/cn';
 import { ArrowUpRight, ChevronRight, Menu, X } from 'lucide-react';
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-const DOCS_URL = 'https://docs.meteora.ag/dynamic-bonding-curve/dbc-integration/overview';
 
 // ── Logo ─────────────────────────────────────────────────────────────────────
 
@@ -71,7 +70,7 @@ export function Navbar() {
           >
             <NavLink href="/#how-it-works" label="How it works" active={false} />
             <NavLink href="/#markets" label="Markets" active={pathname === '/'} />
-            <NavLink href={DOCS_URL} label="Docs" active={false} external />
+            <NavLink href="/docs" label="Docs" active={pathname === '/docs'} />
           </nav>
 
           {/* Right */}
@@ -116,7 +115,7 @@ export function Navbar() {
           >
             <MobileNavLink href="/#how-it-works" label="How it works" onClick={() => setMobileOpen(false)} />
             <MobileNavLink href="/#markets" label="Markets" onClick={() => setMobileOpen(false)} />
-            <MobileNavLink href={DOCS_URL} label="Docs" onClick={() => setMobileOpen(false)} external />
+            <MobileNavLink href="/docs" label="Docs" onClick={() => setMobileOpen(false)} />
             <Link
               href="/markets/new"
               onClick={() => setMobileOpen(false)}
