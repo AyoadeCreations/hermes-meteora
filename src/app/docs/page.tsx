@@ -181,12 +181,12 @@ export default function DocsPage() {
           </ol>
 
           <h2 id="limits" className={H2}>What Hermes does not do</h2>
-          <p className={P}>Hermes is a rehearsal, not a forecast, and it does not touch your funds.</p>
+          <p className={P}>Hermes is a rehearsal, not a forecast. Simulations never move funds, and any deployment is signed by you in your own wallet.</p>
           <ul className={UL}>
             <li><span className={B}>It does not predict demand.</span> Simulated trades follow stated assumptions about how many people buy and how much. Change the assumptions and the result changes.</li>
             <li><span className={B}>It does not model real bots exactly.</span> The stress test uses a fixed bot behaviour: buy early, hold, then exit when the window closes. Real bots vary.</li>
             <li><span className={B}>Its protection settings are not Meteora&rsquo;s exact settings.</span> They are modelled on the fee scheduler, rate limiter and gated early access, and labelled Illustrative.</li>
-            <li><span className={B}>It is not a live market.</span> A report is a plan. Nothing in it moves real money until a creator chooses to launch.</li>
+            <li><span className={B}>It is not a live market.</span> A report is a plan. Nothing in it moves real money until a creator signs a deployment.</li>
             <li><span className={B}>It is not financial advice.</span> Reports describe how a design behaves in a model, not whether a token will succeed.</li>
           </ul>
 
@@ -205,8 +205,9 @@ export default function DocsPage() {
             (Neon) on Vercel, Solana wallet adapter.
           </p>
           <p className={`${P} mt-3`}>
-            <span className={B}>Coming next:</span> a production release with a live database and wallet-connected
-            launches. See the roadmap below.
+            <span className={B}>Deployment:</span> creating the market configuration from a connected wallet works on
+            devnet. Pool creation and mainnet launches are still in progress, so treat deployment as experimental.
+            See the roadmap below.
           </p>
 
           <h2 id="roadmap" className={H2}>Roadmap</h2>
@@ -222,7 +223,7 @@ export default function DocsPage() {
 
           <h2 id="about" className={H2}>About Hermes</h2>
           <p className={P}>
-            Hermes is built by Roland Ayoade at AyoadeCreations, for teams launching tokens on Meteora. This guide
+            Hermes is built by AyoadeCreations for teams launching tokens on Meteora. This guide
             changes as the product does, and the roadmap above shows what comes next.
           </p>
 
