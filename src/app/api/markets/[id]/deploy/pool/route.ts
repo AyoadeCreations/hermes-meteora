@@ -110,3 +110,34 @@ export async function POST(
     return NextResponse.json({ error: `Failed to build pool transaction: ${message}` }, { status: 500 });
   }
 }
+
+/**
+ * GET /api/markets/:id/deploy/pool?baseMint=...&network=...
+ *
+ * Reads the pool that was actually created for a base mint from the chain, so the
+ * app saves the real address instead of one it derived. Returns 404 until the
+ * pool account is visible.
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const baseMint = url.searchParams.get('baseMint') ?? '';
+    const network = url.searchParams.get('network') === 'mainnet-beta' ? 'mainnet-beta' : 'devnet';
+    if (baseMint.length < 32) return NextResponse.json({ error: 'baseMint is required' }, { status: 400 });
+
+    const { Connection } = await import('@solana/web3.js');
+    const { DynamicBondingCurveClient } = await import('@meteora-ag/dynamic-bonding-curve-sdk');
+    const rpcUrl =
+      network === 'mainnet-beta'
+        ? (process.env.NEXT_PUBLIC_SOLANA_RPC_MAINNET ?? 'https://api.mainnet-beta.solana.com')
+        : (process.env.NEXT_PUBLIC_SOLANA_RPC_DEVNET ?? 'https://api.devnet.solana.com');
+    const client = DynamicBondingCurveClient.create(new Connection(rpcUrl, 'confirmed'), 'confirmed');
+
+    const found = await client.state.getPoolByBaseMint(baseMint);
+    if (!found) return NextResponse.json({ error: 'Pool not found yet' }, { status: 404 });
+    return NextResponse.json({ poolAddress: found.publicKey.toString() });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unexpected error';
+    return NextResponse.json({ error: `Pool lookup failed: ${message}` }, { status: 500 });
+  }
+}

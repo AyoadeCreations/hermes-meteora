@@ -307,6 +307,7 @@ export default function DeployPage() {
       const poolData = await poolRes.json() as {
         createPoolTxBase64?: string;
         poolAddress?: string;
+        baseMint?: string;
         blockhash?: string;
         lastValidBlockHeight?: number;
         error?: string;
@@ -337,7 +338,21 @@ export default function DeployPage() {
         throw new Error(`Pool transaction rejected on-chain: ${JSON.stringify(poolConfirm.value.err)}`);
       }
 
-      const poolAddress = poolData.poolAddress;
+      // Read the real pool from the chain. Fall back to the derived address only if the
+      // lookup keeps failing, and say so.
+      let poolAddress = poolData.poolAddress;
+      if (poolData.baseMint) {
+        for (let attempt = 0; attempt < 6; attempt++) {
+          const lookup = await fetch(
+            `/api/markets/${id}/deploy/pool?baseMint=${encodeURIComponent(poolData.baseMint)}&network=${NETWORK}`,
+          );
+          if (lookup.ok) {
+            const found = await lookup.json() as { poolAddress?: string };
+            if (found.poolAddress) { poolAddress = found.poolAddress; break; }
+          }
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+      }
       await patchDeployment(dep.id, 'confirmed', {
         signature:     poolSignature,
         configAddress: configAddress ?? '',
