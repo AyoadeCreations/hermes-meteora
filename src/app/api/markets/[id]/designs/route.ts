@@ -41,7 +41,7 @@ export async function POST(
       }
     }
 
-    const result = generateCandidates(market);
+    const result = await generateCandidates(market);
     if (result.designs.length === 0) {
       return NextResponse.json(
         {

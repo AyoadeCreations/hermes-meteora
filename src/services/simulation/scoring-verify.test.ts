@@ -58,20 +58,20 @@ function makeBrief(overrides: Partial<MarketBrief> = {}): MarketBrief {
 describe('Scoring engine: verified math', () => {
   // ── Price impact score ────────────────────────────────────────────────────
 
-  it('price impact score at 0% impact = 1.0', () => {
+  it('price impact score at 0% impact = 1.0', async () => {
     const r = makeResult({ averagePriceImpact: 0 });
     const bd = scoreObjective('balanced', r, 85);
     expect(bd.priceImpactScore).toBeCloseTo(1.0, 3);
   });
 
-  it('price impact score at 10% impact ≈ 0.5 (half-target)', () => {
+  it('price impact score at 10% impact ≈ 0.5 (half-target)', async () => {
     const r = makeResult({ averagePriceImpact: 10 });
     const bd = scoreObjective('balanced', r, 85);
     // decay formula: 1 / (1 + 10/10) = 0.5
     expect(bd.priceImpactScore).toBeCloseTo(0.5, 3);
   });
 
-  it('price impact score at 10% < score at 5%', () => {
+  it('price impact score at 10% < score at 5%', async () => {
     const low  = scoreObjective('balanced', makeResult({ averagePriceImpact: 5 }),  85);
     const high = scoreObjective('balanced', makeResult({ averagePriceImpact: 10 }), 85);
     expect(low.priceImpactScore).toBeGreaterThan(high.priceImpactScore);
@@ -79,19 +79,19 @@ describe('Scoring engine: verified math', () => {
 
   // ── Capital formation score ───────────────────────────────────────────────
 
-  it('capital formation score at 0% graduation = 0.0', () => {
+  it('capital formation score at 0% graduation = 0.0', async () => {
     const r = makeResult({ quoteAtGraduation: 0 });
     const bd = scoreObjective('balanced', r, 85);
     expect(bd.capitalFormationScore).toBeCloseTo(0, 5);
   });
 
-  it('capital formation score at 100% graduation = 1.0', () => {
+  it('capital formation score at 100% graduation = 1.0', async () => {
     const r = makeResult({ quoteAtGraduation: 85, graduationReached: true });
     const bd = scoreObjective('balanced', r, 85);
     expect(bd.capitalFormationScore).toBeCloseTo(1.0, 5);
   });
 
-  it('capital formation score at 50% graduation ≈ 0.5', () => {
+  it('capital formation score at 50% graduation ≈ 0.5', async () => {
     const r = makeResult({ quoteAtGraduation: 42.5 });
     const bd = scoreObjective('balanced', r, 85);
     expect(bd.capitalFormationScore).toBeCloseTo(0.5, 2);
@@ -99,7 +99,7 @@ describe('Scoring engine: verified math', () => {
 
   // ── Progression score ─────────────────────────────────────────────────────
 
-  it('monotone price path has high progression score', () => {
+  it('monotone price path has high progression score', async () => {
     // Perfectly uniform steps
     const r = makeResult({
       pricePath: [
@@ -114,7 +114,7 @@ describe('Scoring engine: verified math', () => {
     expect(bd.progressionScore).toBeGreaterThan(0.7);
   });
 
-  it('chaotic price path has lower progression score than smooth', () => {
+  it('chaotic price path has lower progression score than smooth', async () => {
     const smooth = makeResult({
       pricePath: [
         { tradeIndex: 0, price: 1.0 },
@@ -138,7 +138,7 @@ describe('Scoring engine: verified math', () => {
 
   // ── Fee score ─────────────────────────────────────────────────────────────
 
-  it('fee score is highest when fee rate ≈ 3% of capital', () => {
+  it('fee score is highest when fee rate ≈ 3% of capital', async () => {
     // totalFees = 3% of capitalRequired = 1 * 0.03 = 0.03
     const perfect = makeResult({ totalFees: 0.03, capitalRequired: 1.0 });
     const low     = makeResult({ totalFees: 0.001, capitalRequired: 1.0 });
@@ -152,7 +152,7 @@ describe('Scoring engine: verified math', () => {
 
   // ── Weighted score ────────────────────────────────────────────────────────
 
-  it('weighted score = sum of (weight × dimension)', () => {
+  it('weighted score = sum of (weight × dimension)', async () => {
     const result = makeResult();
     const bd = scoreObjective('controlled_discovery', result, 85);
     const w  = OBJECTIVE_WEIGHTS['controlled_discovery']!;
@@ -166,9 +166,9 @@ describe('Scoring engine: verified math', () => {
 
   // ── End-to-end: generated design scores trace to simulation ──────────────
 
-  it('generated design objectiveScore is computed from its actual simulation', () => {
+  it('generated design objectiveScore is computed from its actual simulation', async () => {
     const brief = makeBrief({ objective: 'low_price_impact' });
-    const { designs } = generateCandidates(brief);
+    const { designs } = await generateCandidates(brief);
     for (const design of designs) {
       // Recompute score from the stored simulation and compare
       const recomputed = scoreObjective(
@@ -181,11 +181,11 @@ describe('Scoring engine: verified math', () => {
     }
   });
 
-  it('designs sorted by objectiveScore match score ordering across all objectives', () => {
+  it('designs sorted by objectiveScore match score ordering across all objectives', async () => {
     const objectives = ['controlled_discovery', 'low_price_impact', 'fast_capital_formation', 'balanced'] as const;
     for (const obj of objectives) {
       const brief = makeBrief({ objective: obj });
-      const { designs } = generateCandidates(brief);
+      const { designs } = await generateCandidates(brief);
       for (let i = 1; i < designs.length; i++) {
         expect(designs[i - 1]!.objectiveScore).toBeGreaterThanOrEqual(designs[i]!.objectiveScore);
       }

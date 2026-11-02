@@ -30,39 +30,39 @@ function newMarket() {
     expectedDemand: { profile: 'medium' }, objective: 'balanced',
   });
 }
-function fresh(market: ReturnType<Db['createMarket']>) {
-  const r = gen.generateCandidates(market);
+async function fresh(market: ReturnType<Db['createMarket']>) {
+  const r = await gen.generateCandidates(market);
   return [...r.designs, r.baseline];
 }
 
 describe('saveDesignsIfNone', () => {
-  it('saves once, then refuses to add a second set', () => {
+  it('saves once, then refuses to add a second set', async () => {
     const m = newMarket();
-    expect(db.saveDesignsIfNone(m.id, fresh(m))).toBe(true);
+    expect(db.saveDesignsIfNone(m.id, await fresh(m))).toBe(true);
     const first = db.getDesigns(m.id).map((d) => d.id).sort();
-    expect(db.saveDesignsIfNone(m.id, fresh(m))).toBe(false);
+    expect(db.saveDesignsIfNone(m.id, await fresh(m))).toBe(false);
     expect(db.getDesigns(m.id).map((d) => d.id).sort()).toEqual(first);
   });
 });
 
 describe('replaceDesigns', () => {
-  it('swaps the set for a new one without leftovers', () => {
+  it('swaps the set for a new one without leftovers', async () => {
     const m = newMarket();
-    db.saveDesignsIfNone(m.id, fresh(m));
+    db.saveDesignsIfNone(m.id, await fresh(m));
     const before = db.getDesigns(m.id).map((d) => d.id);
-    db.replaceDesigns(m.id, fresh(m));
+    db.replaceDesigns(m.id, await fresh(m));
     const after = db.getDesigns(m.id).map((d) => d.id);
     expect(after.length).toBe(before.length);
     expect(after.some((id) => before.includes(id))).toBe(false);
   });
 
-  it('keeps a design that a deployment uses', () => {
+  it('keeps a design that a deployment uses', async () => {
     const m = newMarket();
-    db.saveDesignsIfNone(m.id, fresh(m));
+    db.saveDesignsIfNone(m.id, await fresh(m));
     const used = db.getDesigns(m.id)[0];
     if (!used) throw new Error('no design');
     db.createDeployment({ marketId: m.id, designId: used.id, walletAddress: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU' });
-    db.replaceDesigns(m.id, fresh(m));
+    db.replaceDesigns(m.id, await fresh(m));
     const ids = db.getDesigns(m.id).map((d) => d.id);
     expect(ids).toContain(used.id);
   });

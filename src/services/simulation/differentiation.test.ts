@@ -40,62 +40,65 @@ function hasVariation<T>(values: T[]): boolean {
 }
 
 // ── Scenario 1: Low demand + controlled discovery ─────────────────────────
-describe('Scenario 1: Low demand + controlled discovery', () => {
+describe('Scenario 1: Low demand + controlled discovery', async () => {
   const brief = makeBrief({
     objective:     'controlled_discovery',
     expectedDemand: { profile: 'low' },
     graduationQuoteAmount: 50,
   });
-  const { designs } = generateCandidates(brief);
+  const { designs } = await generateCandidates(brief);
 
-  it('produces 3 designs', () => { expect(designs).toHaveLength(3); });
+  it('produces 3 designs', async () => { expect(designs).toHaveLength(3); });
 
-  it('designs have different fee rates', () => {
+  it('designs have different fee rates', async () => {
     const fees = designs.map((d) => d.fees.baseFeeBps);
     expect(hasVariation(fees)).toBe(true);
   });
 
-  it('designs have different segment counts', () => {
-    const segs = designs.map((d) => d.curve.segments.length);
+  it('designs have different segment counts', async () => {
+    // The SDK builds 16 segments for every design, so shape differs by liquidity weights.
+    const segs = designs.map((d) => JSON.stringify(d.curve.liquidityWeights));
     expect(hasVariation(segs)).toBe(true);
   });
 
-  it('designs have different price impact outcomes', () => {
+  it('designs have different price impact outcomes', async () => {
     const impacts = designs.map((d) => Math.round(d.simulation.averagePriceImpact * 10) / 10);
     expect(hasVariation(impacts)).toBe(true);
   });
 
-  it('all designs start from the same price', () => {
-    for (const d of designs) {
-      expect(d.simulation.startingPrice).toBe(brief.startingPrice);
-    }
+  it('all designs start from the same price', async () => {
+    // One shared starting price. It equals the brief's price, or is lowered (and
+    // flagged in the design's warnings) when the brief's price cannot raise the target.
+    const starts = designs.map((d) => d.simulation.startingPrice);
+    for (const price of starts) expect(price).toBeCloseTo(starts[0]!, 12);
+    expect(starts[0]!).toBeLessThanOrEqual(brief.startingPrice * 1.000001);
   });
 });
 
 // ── Scenario 2: High demand + fast capital formation ──────────────────────
-describe('Scenario 2: High demand + fast capital formation', () => {
+describe('Scenario 2: High demand + fast capital formation', async () => {
   const brief = makeBrief({
     objective:     'fast_capital_formation',
     expectedDemand: { profile: 'high' },
     graduationQuoteAmount: 500,
   });
-  const { designs } = generateCandidates(brief);
+  const { designs } = await generateCandidates(brief);
 
-  it('produces 3 designs', () => { expect(designs).toHaveLength(3); });
+  it('produces 3 designs', async () => { expect(designs).toHaveLength(3); });
 
-  it('designs have different graduation thresholds (from graduation multipliers)', () => {
+  it('designs have different graduation thresholds (from graduation multipliers)', async () => {
     const thresholds = designs.map((d) => d.graduation.quoteThreshold);
     expect(hasVariation(thresholds)).toBe(true);
   });
 
-  it('fast_capital_formation: at least one design makes meaningful graduation progress', () => {
+  it('fast_capital_formation: at least one design makes meaningful graduation progress', async () => {
     const bestProgress = Math.max(
       ...designs.map((d) => d.simulation.quoteAtGraduation / d.graduation.quoteThreshold)
     );
     expect(bestProgress).toBeGreaterThan(0.01); // at least 1% progress
   });
 
-  it('designs have materially different price growth factors (different final prices)', () => {
+  it('designs have materially different price growth factors (different final prices)', async () => {
     const finalPrices = designs.map((d) => d.simulation.finalPrice);
     const min = Math.min(...finalPrices);
     const max = Math.max(...finalPrices);
@@ -105,22 +108,23 @@ describe('Scenario 2: High demand + fast capital formation', () => {
 });
 
 // ── Scenario 3: Medium demand + low price impact ──────────────────────────
-describe('Scenario 3: Medium demand + low price impact', () => {
+describe('Scenario 3: Medium demand + low price impact', async () => {
   const brief = makeBrief({
     objective:     'low_price_impact',
     expectedDemand: { profile: 'medium' },
     graduationQuoteAmount: 200,
   });
-  const { designs } = generateCandidates(brief);
+  const { designs } = await generateCandidates(brief);
 
-  it('produces 3 designs', () => { expect(designs).toHaveLength(3); });
+  it('produces 3 designs', async () => { expect(designs).toHaveLength(3); });
 
-  it('designs have different segment counts', () => {
-    const segs = designs.map((d) => d.curve.segments.length);
+  it('designs have different segment counts', async () => {
+    // The SDK builds 16 segments for every design, so shape differs by liquidity weights.
+    const segs = designs.map((d) => JSON.stringify(d.curve.liquidityWeights));
     expect(hasVariation(segs)).toBe(true);
   });
 
-  it('low_price_impact: best design has lower avg impact than worst', () => {
+  it('low_price_impact: best design has lower avg impact than worst', async () => {
     const sorted = [...designs].sort((a, b) => a.simulation.averagePriceImpact - b.simulation.averagePriceImpact);
     const best = sorted[0]!;
     const worst = sorted[sorted.length - 1]!;
@@ -129,17 +133,17 @@ describe('Scenario 3: Medium demand + low price impact', () => {
 });
 
 // ── Scenario 4: High demand + low price impact ────────────────────────────
-describe('Scenario 4: High demand + low price impact', () => {
+describe('Scenario 4: High demand + low price impact', async () => {
   const brief = makeBrief({
     objective:     'low_price_impact',
     expectedDemand: { profile: 'high' },
     graduationQuoteAmount: 300,
   });
-  const { designs } = generateCandidates(brief);
+  const { designs } = await generateCandidates(brief);
 
-  it('produces 3 designs', () => { expect(designs).toHaveLength(3); });
+  it('produces 3 designs', async () => { expect(designs).toHaveLength(3); });
 
-  it('all designs have distinct objective scores', () => {
+  it('all designs have distinct objective scores', async () => {
     const scores = designs.map((d) => Math.round(d.objectiveScore * 1000));
     // At least 2 must be different — tied scores are possible but rare
     expect(designs[0]!.objectiveScore).toBeGreaterThanOrEqual(0);
@@ -148,30 +152,30 @@ describe('Scenario 4: High demand + low price impact', () => {
 });
 
 // ── Scenario 5: Low demand + fast capital formation ───────────────────────
-describe('Scenario 5: Low demand + fast capital formation', () => {
+describe('Scenario 5: Low demand + fast capital formation', async () => {
   const brief = makeBrief({
     objective:     'fast_capital_formation',
     expectedDemand: { profile: 'low' },
     graduationQuoteAmount: 80,
   });
-  const { designs, violations } = generateCandidates(brief);
+  const { designs, violations } = await generateCandidates(brief);
 
-  it('produces 3 designs even with low demand', () => { expect(designs).toHaveLength(3); });
+  it('produces 3 designs even with low demand', async () => { expect(designs).toHaveLength(3); });
 
-  it('generates constraint warnings for demand/objective mismatch', () => {
+  it('generates constraint warnings for demand/objective mismatch', async () => {
     // Low demand + fast capital formation should trigger a warning
     const hasWarning = violations.some((v) => v.severity === 'warning');
     expect(hasWarning).toBe(true);
   });
 
-  it('designs still differ in fees', () => {
+  it('designs still differ in fees', async () => {
     const fees = designs.map((d) => d.fees.baseFeeBps);
     expect(hasVariation(fees)).toBe(true);
   });
 });
 
 // ── Cross-objective comparison ─────────────────────────────────────────────
-describe('Cross-objective: same brief, different objectives produce different designs', () => {
+describe('Cross-objective: same brief, different objectives produce different designs', async () => {
   const baseBrief: Omit<MarketBrief, 'id' | 'createdAt' | 'updatedAt' | 'objective'> = {
     tokenName:     'Cross Test',
     tokenSymbol:   'CTT',
@@ -187,24 +191,25 @@ describe('Cross-objective: same brief, different objectives produce different de
     return { ...baseBrief, id: nanoid(16), objective, createdAt: now, updatedAt: now };
   }
 
-  it('controlled_discovery vs fast_capital_formation: best designs differ in fee', () => {
-    const { designs: cdDesigns } = generateCandidates(briefFor('controlled_discovery'));
-    const { designs: fcDesigns } = generateCandidates(briefFor('fast_capital_formation'));
+  it('controlled_discovery vs fast_capital_formation: best designs differ in fee', async () => {
+    const { designs: cdDesigns } = await generateCandidates(briefFor('controlled_discovery'));
+    const { designs: fcDesigns } = await generateCandidates(briefFor('fast_capital_formation'));
     // The top designs for different objectives should have different templates applied
     const cdBest = cdDesigns[0]!;
     const fcBest = fcDesigns[0]!;
     // They should not be identical configurations
     const identical =
       cdBest.fees.baseFeeBps === fcBest.fees.baseFeeBps &&
-      cdBest.curve.segments.length === fcBest.curve.segments.length;
+      JSON.stringify(cdBest.curve.liquidityWeights) === JSON.stringify(fcBest.curve.liquidityWeights);
     expect(identical).toBe(false);
   });
 
-  it('baseline has same graduation threshold regardless of objective', () => {
-    const { baseline: cdBase } = generateCandidates(briefFor('controlled_discovery'));
-    const { baseline: fcBase } = generateCandidates(briefFor('fast_capital_formation'));
+  it('baseline has same graduation threshold regardless of objective', async () => {
+    const { baseline: cdBase } = await generateCandidates(briefFor('controlled_discovery'));
+    const { baseline: fcBase } = await generateCandidates(briefFor('fast_capital_formation'));
     // Both baselines use the brief's graduation amount directly
-    expect(cdBase.graduation.quoteThreshold).toBe(baseBrief.graduationQuoteAmount);
-    expect(fcBase.graduation.quoteThreshold).toBe(baseBrief.graduationQuoteAmount);
+    // The SDK curve is solved to the target, so it lands within 1% of it.
+    expect(cdBase.graduation.quoteThreshold / baseBrief.graduationQuoteAmount).toBeCloseTo(1, 1);
+    expect(fcBase.graduation.quoteThreshold / baseBrief.graduationQuoteAmount).toBeCloseTo(1, 1);
   });
 });

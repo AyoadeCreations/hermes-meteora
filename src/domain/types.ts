@@ -150,6 +150,12 @@ export interface MarketDesign {
     segments:            CurveSegment[];
     initialMarketCap:   number;  // in SOL
     migrationMarketCap: number;  // in SOL
+    /** One weight per SDK segment (16). Present on designs built from the SDK curve. */
+    liquidityWeights?:  number[];
+    /** Quote decimals the curve was built with. */
+    quoteDecimals?:     number;
+    /** Leftover tokens the SDK needed. Deploy must pass the same value. */
+    leftover?:          number;
   };
 
   liquidityDistribution: LiquidityRange[];

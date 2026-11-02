@@ -17,6 +17,8 @@
 
 import { nanoid } from 'nanoid';
 import type { MarketBrief, MarketDesign, CurveSegment, LiquidityRange } from '@/domain/types';
+import { solveCurveForTargetRaise, solveCurveForGrowth, SDK_SEGMENTS, expandWeights } from '@/services/meteora/curve-build';
+import { knownQuoteDecimals } from '@/services/meteora/config';
 import type { ConstraintViolation } from '@/domain/schemas';
 import { runSimulation } from './engine';
 import { scoreObjective, computeWeightedScore } from './scoring';
@@ -29,59 +31,6 @@ import {
 
 const MIN_FEE_BPS   = 25;
 const MAX_FEE_BPS   = 9900;
-const Q64           = BigInt('18446744073709551616'); // 2^64
-const MIN_PRICE     = 1e-18; // guard against division by zero in CLMM
-
-// ── Sqrt price ─────────────────────────────────────────────────────────────
-
-function priceToSqrtPrice(price: number): bigint {
-  const safePrice = Math.max(price, MIN_PRICE);
-  return BigInt(Math.round(Math.sqrt(safePrice) * Number(Q64)));
-}
-
-// ── Segment builder ────────────────────────────────────────────────────────
-
-function buildSegments(
-  prices:           number[],
-  totalSupply:      number,
-  liquidityWeights: number[],
-): CurveSegment[] {
-  const totalWeight = liquidityWeights.reduce((a, b) => a + b, 0);
-  const segments: CurveSegment[] = [];
-
-  for (let i = 0; i < prices.length - 1; i++) {
-    const priceStart = Math.max(prices[i] ?? MIN_PRICE, MIN_PRICE);
-    const priceEnd   = Math.max(prices[i + 1] ?? priceStart * 2, priceStart * 1.0001);
-    const weight     = ((liquidityWeights[i] ?? 1) / totalWeight);
-    // 70% of supply on curve, 30% reserved for migration
-    const baseTokens = Math.floor(totalSupply * weight * 0.70);
-    // Approximate quote reserve using geometric mean price
-    const meanPrice  = Math.sqrt(priceStart * priceEnd);
-    const quoteTokens = baseTokens * meanPrice;
-
-    segments.push({
-      sqrtPriceLow:    priceToSqrtPrice(priceStart).toString(),
-      sqrtPriceHigh:   priceToSqrtPrice(priceEnd).toString(),
-      priceStart,
-      priceEnd,
-      baseTokens,
-      quoteTokens,
-      liquidityWeight: weight,
-    });
-  }
-
-  return segments;
-}
-
-// ── Exponential price ladder ───────────────────────────────────────────────
-
-function buildPricePoints(start: number, growthFactor: number, count: number): number[] {
-  const points: number[] = [];
-  for (let i = 0; i <= count; i++) {
-    points.push(start * Math.pow(growthFactor, i / count));
-  }
-  return points;
-}
 
 // ── Liquidity weight profiles ──────────────────────────────────────────────
 
@@ -165,7 +114,9 @@ function buildRationale(
   const gradPct  = gradThreshold > 0 ? (sim.quoteAtGraduation / gradThreshold * 100).toFixed(1) : '0.0';
   const feePct   = (template.feeBps / 100).toFixed(2);
   const segments_s = segments.length;
-  const growthX  = template.priceGrowthFactor;
+  const first = segments[0]?.priceStart ?? 0;
+  const last  = segments[segments.length - 1]?.priceEnd ?? 0;
+  const growthX = first > 0 ? Math.round(last / first) : 0;
 
   const profileDesc: Record<LiqProfile, string> = {
     front_heavy:  'concentrates effective liquidity near the starting price, reducing early price impact for the first buyers',
@@ -191,36 +142,107 @@ function buildRationale(
 
 // ── Liquidity range descriptions ───────────────────────────────────────────
 
-function buildLiquidityRanges(prices: number[], profile: LiqProfile): LiquidityRange[] {
-  const weights = buildLiquidityWeights(profile, prices.length - 1);
+function buildLiquidityRanges(segments: CurveSegment[], profile: LiqProfile): LiquidityRange[] {
   const labels: Record<LiqProfile, string> = {
     front_heavy: 'High depth near launch price',
     back_heavy:  'High depth near graduation price',
     uniform:     'Even depth across price range',
     mid_heavy:   'High depth in mid-price range',
   };
-  return prices.slice(0, -1).map((pMin, i) => ({
-    priceMin:    pMin,
-    priceMax:    prices[i + 1] ?? pMin * 2,
-    weight:      weights[i] ?? 1,
+  return segments.map((seg) => ({
+    priceMin:    seg.priceStart,
+    priceMax:    seg.priceEnd,
+    weight:      seg.liquidityWeight,
     description: labels[profile],
   }));
+}
+
+// ── Curve from the SDK ─────────────────────────────────────────────────────
+
+/**
+ * Every design's curve is built by Meteora's own SDK builder, so the simulator
+ * runs on exactly the curve that would be deployed.
+ */
+interface CurveSpec {
+  profile:      LiqProfile;
+  segmentCount: number;
+  targetRaise:  number;
+  baseFeeBps:   number;
+  growthFactor: number;
+}
+
+function curveInputBase(brief: MarketBrief, spec: CurveSpec) {
+  const quoteDecimals = knownQuoteDecimals(brief.quoteMint) ?? 9;
+  const liquidityWeights = expandWeights(buildLiquidityWeights(spec.profile, spec.segmentCount), SDK_SEGMENTS);
+  return { totalSupply: brief.totalSupply, quoteDecimals, liquidityWeights, baseFeeBps: spec.baseFeeBps };
+}
+
+/**
+ * One starting market cap shared by every design for a brief, so designs are
+ * comparable. The creator's starting price is used when every design can raise
+ * its target from it. Otherwise the starting price is lowered to the highest value
+ * from which all of them can, and the creator is told.
+ */
+async function chooseStartCap(brief: MarketBrief, specs: CurveSpec[]): Promise<{ cap: number; note: string | null }> {
+  const userCap = brief.startingPrice * brief.totalSupply;
+  let allFeasible = true;
+  for (const spec of specs) {
+    const r = await solveCurveForTargetRaise({ ...curveInputBase(brief, spec), initialMarketCap: userCap }, spec.targetRaise);
+    if (!r.feasible) { allFeasible = false; break; }
+  }
+  if (allFeasible) return { cap: userCap, note: null };
+
+  let cap = Infinity;
+  for (const spec of specs) {
+    const r = await solveCurveForGrowth(curveInputBase(brief, spec), spec.growthFactor, spec.targetRaise);
+    cap = Math.min(cap, r.initialMarketCap);
+  }
+  cap *= 0.999;
+  const price = cap / brief.totalSupply;
+  return {
+    cap,
+    note:
+      `Your starting price (${brief.startingPrice}) is too high to raise ${brief.graduationQuoteAmount} SOL on this supply. ` +
+      `All designs start at ${price.toPrecision(3)} per token instead.`,
+  };
+}
+
+async function buildCurveForDesign(brief: MarketBrief, spec: CurveSpec, startCap: number) {
+  const base = curveInputBase(brief, spec);
+  const solved = await solveCurveForTargetRaise({ ...base, initialMarketCap: startCap }, spec.targetRaise);
+  const notes: string[] = [];
+  if (!solved.feasible) {
+    notes.push(
+      `This curve raises ${solved.migrationQuote.toFixed(1)} SOL at graduation, not the ${spec.targetRaise.toFixed(1)} SOL target.`,
+    );
+  }
+  return {
+    solved: { ...solved, initialMarketCap: startCap },
+    quoteDecimals: base.quoteDecimals,
+    liquidityWeights: base.liquidityWeights,
+    notes,
+  };
 }
 
 // ── Baseline design ────────────────────────────────────────────────────────
 
 /**
- * Baseline: simple linear curve, uniform liquidity, median fee.
- * Represents a naive/default configuration that any operator might use
- * without a market-design system.
- * Used for comparison — not the recommended choice.
+ * Baseline: uniform liquidity, 3% fee. Represents a default configuration that
+ * any operator might use without a market-design system. Used for comparison.
  */
-export function buildBaseline(brief: MarketBrief): MarketDesign {
-  const prices   = buildPricePoints(brief.startingPrice, 10, 4);
-  const weights  = buildLiquidityWeights('uniform', 4);
-  const segments = buildSegments(prices, brief.totalSupply, weights);
-  const gradThreshold = brief.graduationQuoteAmount;
-  const feeBps   = 300; // 3% — a default launchpad fee
+const BASELINE_FEE_BPS = 300; // 3%, a default launchpad fee
+const baselineSpec = (brief: MarketBrief): CurveSpec => ({
+  profile: 'uniform', segmentCount: 4, targetRaise: brief.graduationQuoteAmount, baseFeeBps: BASELINE_FEE_BPS, growthFactor: 10,
+});
+
+export async function buildBaseline(brief: MarketBrief, shared?: { cap: number; note: string | null }): Promise<MarketDesign> {
+  const feeBps = BASELINE_FEE_BPS;
+  const start = shared ?? await chooseStartCap(brief, [baselineSpec(brief)]);
+  const { solved, quoteDecimals, liquidityWeights, notes } =
+    await buildCurveForDesign(brief, baselineSpec(brief), start.cap);
+  if (start.note) notes.unshift(start.note);
+  const segments = solved.segments;
+  const gradThreshold = solved.migrationQuote;
 
   const fees = {
     baseFeeBps:                 feeBps,
@@ -234,7 +256,7 @@ export function buildBaseline(brief: MarketBrief): MarketDesign {
 
   const sim = runSimulation({
     segments,
-    startingPrice:       brief.startingPrice,
+    startingPrice:       segments[0]?.priceStart ?? brief.startingPrice,
     graduationThreshold: gradThreshold,
     fees,
     params: { scenario: 'B', tradeCount: 50, tradeSizeQuote, sellFraction: 0.2 },
@@ -246,24 +268,25 @@ export function buildBaseline(brief: MarketBrief): MarketDesign {
     id:            nanoid(12),
     marketBriefId: brief.id,
     name:          'Baseline Market',
-    description:   'Simple 4-segment uniform curve with 3% fee. Represents a default configuration without market-design optimisation. Used for comparison only.',
+    description:   'Uniform liquidity curve with a 3% fee. Represents a default configuration without market-design optimisation. Used for comparison only.',
     objective:     brief.objective,
     curve: {
-      builderType:        'buildCurve',
+      builderType:        'buildCurveWithLiquidityWeights',
       segments,
-      initialMarketCap:   Math.max(0.001, Math.min(
-        brief.startingPrice * brief.totalSupply,
-        brief.graduationQuoteAmount * 0.5
-      )),
-      migrationMarketCap: brief.graduationQuoteAmount,
+      initialMarketCap:   solved.initialMarketCap,
+      migrationMarketCap: solved.migrationMarketCap,
+      liquidityWeights,
+      quoteDecimals,
+      leftover:           solved.leftover,
     },
-    liquidityDistribution: buildLiquidityRanges(prices, 'uniform'),
+    liquidityDistribution: buildLiquidityRanges(segments, 'uniform'),
     fees,
     graduation: { quoteThreshold: gradThreshold },
     simulation: sim,
     warnings: [
-      'This is the baseline comparison design — not a recommended configuration.',
+      'This is the baseline comparison design, not a recommended configuration.',
       '3% fee is higher than optimised designs. Not tuned to your stated objective.',
+      ...notes,
     ],
     objectiveScore:  computeWeightedScore(scoreBreakdown),
     scoreBreakdown,
@@ -280,7 +303,7 @@ export interface GenerationResult {
   warnings:   string[];
 }
 
-export function generateCandidates(brief: MarketBrief): GenerationResult {
+export async function generateCandidates(brief: MarketBrief): Promise<GenerationResult> {
   const allViolations: ConstraintViolation[] = [...validateBrief(brief)];
   const designs: MarketDesign[] = [];
 
@@ -288,14 +311,23 @@ export function generateCandidates(brief: MarketBrief): GenerationResult {
   const demandMult    = demandMultiplier(brief.expectedDemand.profile);
   const tradeSizeQuote = (brief.graduationQuoteAmount / 20) * demandMult;
 
+  const specFor = (t: Template): CurveSpec => ({
+    profile:      t.liquidityProfile,
+    segmentCount: t.segmentCount,
+    targetRaise:  brief.graduationQuoteAmount * t.graduationMultiplier,
+    baseFeeBps:   Math.max(MIN_FEE_BPS, Math.min(MAX_FEE_BPS, t.feeBps)),
+    growthFactor: t.priceGrowthFactor,
+  });
+  const shared = await chooseStartCap(brief, [...templates.map(specFor), baselineSpec(brief)]);
+
   for (const template of templates) {
-    const prices   = buildPricePoints(brief.startingPrice, template.priceGrowthFactor, template.segmentCount);
-    const weights  = buildLiquidityWeights(template.liquidityProfile, template.segmentCount);
-    const segments = buildSegments(prices, brief.totalSupply, weights);
-
-    const graduationThreshold = brief.graduationQuoteAmount * template.graduationMultiplier;
-
     const feeBps = Math.max(MIN_FEE_BPS, Math.min(MAX_FEE_BPS, template.feeBps));
+    const { solved, quoteDecimals, liquidityWeights, notes } =
+      await buildCurveForDesign(brief, specFor(template), shared.cap);
+    if (shared.note) notes.unshift(shared.note);
+    const segments = solved.segments;
+    const graduationThreshold = solved.migrationQuote;
+
     const fees = {
       baseFeeBps:                 feeBps,
       dynamicFeeEnabled:          template.dynamicFee,
@@ -308,7 +340,7 @@ export function generateCandidates(brief: MarketBrief): GenerationResult {
 
     const sim = runSimulation({
       segments,
-      startingPrice:       brief.startingPrice,
+      startingPrice:       segments[0]?.priceStart ?? brief.startingPrice,
       graduationThreshold,
       fees,
       params: { scenario: 'B', tradeCount: 50, tradeSizeQuote, sellFraction: 0.2 },
@@ -317,8 +349,11 @@ export function generateCandidates(brief: MarketBrief): GenerationResult {
     const scoreBreakdown = scoreObjective(brief.objective, sim, graduationThreshold);
     const objectiveScore = computeWeightedScore(scoreBreakdown);
 
-    const simWarnings = validateSimulationResult(sim, brief.objective).map((v) => v.message);
-    const rationale   = buildRationale(template, segments, sim, graduationThreshold);
+    const simWarnings = [
+      ...validateSimulationResult(sim, brief.objective).map((v) => v.message),
+      ...notes,
+    ];
+    const rationale = buildRationale(template, segments, sim, graduationThreshold);
 
     designs.push({
       id:            nanoid(12),
@@ -329,19 +364,13 @@ export function generateCandidates(brief: MarketBrief): GenerationResult {
       curve: {
         builderType:        'buildCurveWithLiquidityWeights',
         segments,
-        // initialMarketCap must be a small SOL value representing the implied
-        // market cap at launch. SDK expects SOL units, not price×supply in lamports.
-        // We clamp to [0.001, migrationMarketCap * 0.5] to ensure it is always
-        // smaller than migrationMarketCap and within SDK-valid range.
-        initialMarketCap:   Math.max(0.001, Math.min(
-          brief.startingPrice * brief.totalSupply,
-          brief.graduationQuoteAmount * template.graduationMultiplier * 0.5
-        )),
-        // migrationMarketCap = the graduation quote threshold in SOL.
-        // This is what the SDK uses to determine when the pool graduates.
-        migrationMarketCap: brief.graduationQuoteAmount * template.graduationMultiplier,
+        initialMarketCap:   solved.initialMarketCap,
+        migrationMarketCap: solved.migrationMarketCap,
+        liquidityWeights,
+        quoteDecimals,
+        leftover:           solved.leftover,
       },
-      liquidityDistribution: buildLiquidityRanges(prices, template.liquidityProfile),
+      liquidityDistribution: buildLiquidityRanges(segments, template.liquidityProfile),
       fees,
       graduation: { quoteThreshold: graduationThreshold },
       simulation:    sim,
@@ -355,7 +384,7 @@ export function generateCandidates(brief: MarketBrief): GenerationResult {
   // Sort by objective score descending
   designs.sort((a, b) => b.objectiveScore - a.objectiveScore);
 
-  const baseline = buildBaseline(brief);
+  const baseline = await buildBaseline(brief, shared);
 
   return {
     designs,

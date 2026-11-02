@@ -51,7 +51,7 @@ function makeBrief(overrides: Partial<MarketBrief> = {}): MarketBrief {
 // ── Objective scoring ──────────────────────────────────────────────────────
 
 describe('scoreObjective', () => {
-  it('returns scores between 0 and 1 for all dimensions', () => {
+  it('returns scores between 0 and 1 for all dimensions', async () => {
     const result   = makeFakeResult();
     const breakdown = scoreObjective('balanced', result, 85);
     expect(breakdown.priceImpactScore).toBeGreaterThanOrEqual(0);
@@ -64,7 +64,7 @@ describe('scoreObjective', () => {
     expect(breakdown.feeScore).toBeLessThanOrEqual(1);
   });
 
-  it('weights for each objective sum to 1.0', () => {
+  it('weights for each objective sum to 1.0', async () => {
     const objectives = ['controlled_discovery', 'low_price_impact', 'fast_capital_formation', 'balanced'] as const;
     for (const obj of objectives) {
       const w = OBJECTIVE_WEIGHTS[obj];
@@ -73,27 +73,27 @@ describe('scoreObjective', () => {
     }
   });
 
-  it('low_price_impact gives highest weight to priceImpact', () => {
+  it('low_price_impact gives highest weight to priceImpact', async () => {
     const w = OBJECTIVE_WEIGHTS.low_price_impact;
     expect(w.priceImpact).toBeGreaterThan(w.capitalFormation);
     expect(w.priceImpact).toBeGreaterThan(w.progression);
     expect(w.priceImpact).toBeGreaterThan(w.fee);
   });
 
-  it('fast_capital_formation gives highest weight to capitalFormation', () => {
+  it('fast_capital_formation gives highest weight to capitalFormation', async () => {
     const w = OBJECTIVE_WEIGHTS.fast_capital_formation;
     expect(w.capitalFormation).toBeGreaterThan(w.priceImpact);
     expect(w.capitalFormation).toBeGreaterThan(w.progression);
     expect(w.capitalFormation).toBeGreaterThan(w.fee);
   });
 
-  it('high price impact → lower priceImpactScore', () => {
+  it('high price impact → lower priceImpactScore', async () => {
     const low  = scoreObjective('balanced', makeFakeResult({ averagePriceImpact: 1 }),  85);
     const high = scoreObjective('balanced', makeFakeResult({ averagePriceImpact: 50 }), 85);
     expect(low.priceImpactScore).toBeGreaterThan(high.priceImpactScore);
   });
 
-  it('graduated result → higher capitalFormationScore', () => {
+  it('graduated result → higher capitalFormationScore', async () => {
     const notGrad = scoreObjective('balanced', makeFakeResult({ quoteAtGraduation: 5,  graduationReached: false }), 85);
     const grad    = scoreObjective('balanced', makeFakeResult({ quoteAtGraduation: 85, graduationReached: true  }), 85);
     expect(grad.capitalFormationScore).toBeGreaterThan(notGrad.capitalFormationScore);
@@ -101,14 +101,14 @@ describe('scoreObjective', () => {
 });
 
 describe('computeWeightedScore', () => {
-  it('returns a value between 0 and 1', () => {
+  it('returns a value between 0 and 1', async () => {
     const breakdown = scoreObjective('balanced', makeFakeResult(), 85);
     const score     = computeWeightedScore(breakdown);
     expect(score).toBeGreaterThanOrEqual(0);
     expect(score).toBeLessThanOrEqual(1);
   });
 
-  it('is deterministic', () => {
+  it('is deterministic', async () => {
     const breakdown = scoreObjective('balanced', makeFakeResult(), 85);
     expect(computeWeightedScore(breakdown)).toBe(computeWeightedScore(breakdown));
   });
@@ -117,55 +117,55 @@ describe('computeWeightedScore', () => {
 // ── Candidate generation ───────────────────────────────────────────────────
 
 describe('generateCandidates', () => {
-  it('produces exactly 3 designs', () => {
+  it('produces exactly 3 designs', async () => {
     const brief = makeBrief();
-    const { designs } = generateCandidates(brief);
+    const { designs } = await generateCandidates(brief);
     expect(designs).toHaveLength(3);
   });
 
-  it('all designs have unique IDs', () => {
+  it('all designs have unique IDs', async () => {
     const brief = makeBrief();
-    const { designs } = generateCandidates(brief);
+    const { designs } = await generateCandidates(brief);
     const ids = designs.map((d) => d.id);
     expect(new Set(ids).size).toBe(3);
   });
 
-  it('designs are meaningfully different (different feeBps)', () => {
+  it('designs are meaningfully different (different feeBps)', async () => {
     const brief = makeBrief();
-    const { designs } = generateCandidates(brief);
+    const { designs } = await generateCandidates(brief);
     const fees = designs.map((d) => d.fees.baseFeeBps);
     // At least 2 different fee values
     expect(new Set(fees).size).toBeGreaterThan(1);
   });
 
-  it('all designs have the same market brief ID', () => {
+  it('all designs have the same market brief ID', async () => {
     const brief = makeBrief();
-    const { designs } = generateCandidates(brief);
+    const { designs } = await generateCandidates(brief);
     for (const d of designs) {
       expect(d.marketBriefId).toBe(brief.id);
     }
   });
 
-  it('all designs have ≤ 16 curve segments (Meteora MAX_CURVE_POINT)', () => {
+  it('all designs have ≤ 16 curve segments (Meteora MAX_CURVE_POINT)', async () => {
     const brief = makeBrief();
-    const { designs } = generateCandidates(brief);
+    const { designs } = await generateCandidates(brief);
     for (const d of designs) {
       expect(d.curve.segments.length).toBeLessThanOrEqual(16);
     }
   });
 
-  it('all designs have fee bps within Meteora limits [25, 9900]', () => {
+  it('all designs have fee bps within Meteora limits [25, 9900]', async () => {
     const brief = makeBrief();
-    const { designs } = generateCandidates(brief);
+    const { designs } = await generateCandidates(brief);
     for (const d of designs) {
       expect(d.fees.baseFeeBps).toBeGreaterThanOrEqual(25);
       expect(d.fees.baseFeeBps).toBeLessThanOrEqual(9900);
     }
   });
 
-  it('designs are sorted by objectiveScore descending', () => {
+  it('designs are sorted by objectiveScore descending', async () => {
     const brief = makeBrief();
-    const { designs } = generateCandidates(brief);
+    const { designs } = await generateCandidates(brief);
     for (let i = 1; i < designs.length; i++) {
       const prev = designs[i - 1];
       const curr = designs[i];
@@ -175,20 +175,20 @@ describe('generateCandidates', () => {
     }
   });
 
-  it('all objective scores are between 0 and 1', () => {
+  it('all objective scores are between 0 and 1', async () => {
     const brief = makeBrief();
-    const { designs } = generateCandidates(brief);
+    const { designs } = await generateCandidates(brief);
     for (const d of designs) {
       expect(d.objectiveScore).toBeGreaterThanOrEqual(0);
       expect(d.objectiveScore).toBeLessThanOrEqual(1);
     }
   });
 
-  it('works for all four objectives', () => {
+  it('works for all four objectives', async () => {
     const objectives = ['controlled_discovery', 'low_price_impact', 'fast_capital_formation', 'balanced'] as const;
     for (const obj of objectives) {
       const brief = makeBrief({ objective: obj });
-      const { designs } = generateCandidates(brief);
+      const { designs } = await generateCandidates(brief);
       expect(designs).toHaveLength(3);
     }
   });

@@ -19,6 +19,7 @@ import { z } from 'zod';
 import { getDeployment, getDesign, getMarket } from '@/lib/db';
 import type { MarketBrief, MarketDesign, SolanaNetwork } from '@/domain/types';
 import { LIQUIDITY_DISTRIBUTION, resolveQuoteDecimals } from '@/services/meteora/config';
+import { buildDbcCurve } from '@/services/meteora/curve-build';
 
 // NOTE: No static imports from @solana/web3.js or @meteora-ag/dynamic-bonding-curve-sdk.
 // All usage is via dynamic import() inside buildWithSdk to prevent webpack from
@@ -181,7 +182,7 @@ async function buildWithSdk(params: {
   const lpAlloc = LIQUIDITY_DISTRIBUTION;
   const quoteDecimals = await resolveQuoteDecimals(connection, market.quoteMint);
 
-  const builtCurve = buildCurveWithMarketCap({
+  const legacyCurve = () => buildCurveWithMarketCap({
     token: {
       tokenType: TokenType.SPLToken,
       tokenBaseDecimal: 6,
@@ -223,6 +224,24 @@ async function buildWithSdk(params: {
     initialMarketCap: design.curve.initialMarketCap,
     migrationMarketCap: design.curve.migrationMarketCap,
   });
+
+  // Designs made by the current generator carry the exact inputs of the curve that was
+  // simulated. Rebuild it from those, so what deploys is what the simulator ran.
+  // Older saved designs have no weights and fall back to the market-cap builder.
+  const weights = design.curve.liquidityWeights;
+  const builtCurve = weights && weights.length > 0
+    ? ((await buildDbcCurve({
+        totalSupply:                 market.totalSupply,
+        quoteDecimals:               design.curve.quoteDecimals ?? quoteDecimals,
+        initialMarketCap:            design.curve.initialMarketCap,
+        migrationMarketCap:          design.curve.migrationMarketCap,
+        liquidityWeights:            weights,
+        baseFeeBps:                  design.fees.baseFeeBps,
+        dynamicFeeEnabled:           design.fees.dynamicFeeEnabled,
+        creatorTradingFeePercentage: design.fees.creatorTradingFeePercentage,
+        leftover:                    design.curve.leftover,
+      })).sdkCurve as ReturnType<typeof buildCurveWithMarketCap>)
+    : legacyCurve();
 
   const configKeypair = Keypair.generate();
   const quoteMint = new PublicKey(market.quoteMint);
